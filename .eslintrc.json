@@ -1,0 +1,33 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:import/electron",
+    "plugin:import/typescript",
+    "prettier"
+  ],
+  "settings": {
+    "import/resolver": {
+      "alias": {
+        "map": [
+          ["@pages", "./src/pages"],
+          ["@assets", "./src/assets"],
+          ["@ipcMain", "./src/ipc/main"],
+          ["@ipcRenderer", "./src/ipc/renderer"],
+          ["@components", "./src/components"],
+          ["@hooks", "./src/components/hooks"],
+          ["@utils", "./src/utils"],
+          ["@src", "./src"]
+        ],
+        "extensions": [".ts", ".tsx", ".json", ".svg", ".png"]
+      }
+    }
+  }
+}

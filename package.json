@@ -1,0 +1,110 @@
+{
+  "name": "game-launcher",
+  "productName": "Game Launcher",
+  "version": "1.0.0",
+  "description": "The official game launcher",
+  "main": "./.vite/build/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint --ext .ts,.tsx ."
+  },
+  "keywords": [],
+  "author": {
+    "name": "Pokémon Workshop",
+    "email": "hostmaster@pokemonworkshop.com"
+  },
+  "license": "CC BY-NC-ND",
+  "engines": {
+    "node": ">=22.17.0",
+    "npm": ">=9.5.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "onFail": "error",
+      "version": ">=22.17.0"
+    },
+    "packageManager": {
+      "name": "npm",
+      "onFail": "error",
+      "version": ">=10.9.0"
+    }
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-vite": "^7.8.1",
+    "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/node": "^22.13.9",
+    "@types/node-7z": "^2.1.8",
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "@types/styled-components": "^5.1.26",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "@vitejs/plugin-react": "^4.5.1",
+    "app-builder-lib": "^26.0.12",
+    "css-loader": "^6.8.1",
+    "electron": "^36.3.2",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.29.0",
+    "node-loader": "^2.0.0",
+    "prettier": "3.1.0",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.2",
+    "url-loader": "^4.1.1",
+    "vite": "^6.3.5",
+    "vite-plugin-static-copy": "^3.0.0",
+    "vite-plugin-svgr": "^4.3.0"
+  },
+  "dependencies": {
+    "7zip-bin": "^5.2.0",
+    "axios": "^1.6.2",
+    "electron-is-dev": "^2.0.0",
+    "electron-log": "^5.4.1",
+    "electron-updater": "^6.6.2",
+    "i18next": "^24.2.2",
+    "i18next-browser-languagedetector": "^8.0.4",
+    "i18next-http-backend": "^3.0.2",
+    "node-7z": "^3.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^15.4.1",
+    "react-router-dom": "^6.20.1",
+    "styled-components": "^5.3.6",
+    "yauzl": "^2.10.0"
+  },
+  "build": {
+    "appId": "com.pokemonworkshop.gamelauncher",
+    "directories": {
+      "output": "out/make"
+    },
+    "extraResources": [
+      "./src/assets/**"
+    ],
+    "extraFiles": [
+      "app-update.yml"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/assets/images/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "shortcutName": "Game Launcher",
+      "artifactName": "Game-Launcher-Setup-${version}.${ext}",
+      "selectPerMachineByDefault": false
+    }
+  }
+}

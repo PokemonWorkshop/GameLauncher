@@ -1,0 +1,20 @@
+{
+  "arrowParens": "always",
+  "embeddedLanguageFormatting": "auto",
+  "endOfLine": "lf",
+  "quoteProps": "as-needed",
+  "printWidth": 150,
+  "singleQuote": true,
+  "semi": true,
+  "trailingComma": "all",
+  "jsxSingleQuote": false,
+  "importOrder": [
+    "^@src/(.*)$",
+    "^@ipc(.*)$",
+    "^@pages/(.*)$",
+    "^@components/(.*)$",
+    "^@assets/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true
+}
