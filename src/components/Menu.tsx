@@ -100,7 +100,7 @@ export const Menu = ({ config, dialogsRef }: MenuProps) => {
           {isWindows && (
             <span onClick={(event) => closeMenu(event, () => window.launcherApi.createDesktopShortcut())}>{t('menu_create_desktop_shortcut')}</span>
           )}
-          <span onClick={(event) => closeMenu(event, () => window.launcherApi.openLogsFolder(config.gamePath))}>{t('menu_access_log_error')}</span>
+          <span onClick={(event) => closeMenu(event, () => window.launcherApi.openGameFolder(config.gamePath))}>{t('menu_open_game_folder')}</span>
           <span data-disabled>{t('menu_choose_save_location')}</span>
           <span onClick={(event) => closeMenu(event, () => dialogsRef.current?.openDialog('uninstall', true))}>{t('menu_uninstall')}</span>
         </div>

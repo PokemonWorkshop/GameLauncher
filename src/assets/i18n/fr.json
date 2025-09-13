@@ -32,7 +32,7 @@
   "uninstall_game": "Désintallation du jeu...",
   "error_uninstalling_game": "Une erreur est survenue pendant la désinstallation du jeu",
   "menu_create_desktop_shortcut": "Créer un raccourci sur le bureau",
-  "menu_access_log_error": "Accéder au journal d’erreur",
+  "menu_open_game_folder": "Ouvrir le dossier du jeu",
   "menu_choose_save_location": "Choisir l’emplacement de la sauvegarde",
   "menu_uninstall": "Désinstaller le jeu",
   "uninstall_dialog_title": "Désinstallation du jeu",
