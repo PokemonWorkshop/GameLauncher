@@ -11,7 +11,7 @@ import { requestFile, getRequestStateReport, getRequestData } from '@ipcMain/req
 import { saveFile } from '@ipcMain/saveFile';
 import { startGame } from '@ipcMain/startGame';
 import { checkNeedToUpdateBinaries, cleanBinariesUpdate, extractBinaries, initBinariesUpdate, requestBinariesFile } from '@ipcMain/binariesUpdate';
-import { openLogsFolder } from '@ipcMain/openLogsFolder';
+import { openGameFolder } from '@ipcMain/openGameFolder';
 import { createDesktopShortcut } from '@ipcMain/createDesktopShortcut';
 import { gameUninstall } from '@ipcMain/gameUninstall';
 
@@ -59,7 +59,7 @@ export const preloadIpcMain = () => {
     requestBinariesFile(event, { binariesUrl, installPath, gamePath }),
   );
   ipcMain.on('extract-binaries', (event, installPath, gamePath) => extractBinaries(event, installPath, gamePath));
-  ipcMain.on('open-logs-folder', (_, gamePath) => openLogsFolder(gamePath));
+  ipcMain.on('open-game-folder', (_, gamePath) => openGameFolder(gamePath));
   ipcMain.on('create-desktop-shortcut', () => createDesktopShortcut());
   ipcMain.on('game-uninstall', (event, installPath) => gameUninstall(event, installPath));
   ipcMain.once('game-launcher-check-update', () => app.isPackaged && autoUpdater.checkForUpdates());
