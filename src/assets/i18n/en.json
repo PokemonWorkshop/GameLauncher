@@ -32,7 +32,7 @@
   "uninstall_game": "Uninstalling the game...",
   "error_uninstalling_game": "An error occurred during the uninstallation of the game",
   "menu_create_desktop_shortcut": "Create a desktop shortcut",
-  "menu_access_log_error": "Access to log error",
+  "menu_open_game_folder": "Open the game folder",
   "menu_choose_save_location": "Choose the save location",
   "menu_uninstall": "Uninstall the game",
   "uninstall_dialog_title": "Uninstalling the game",
