@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Title } from '@components/home/Title';
 import { Background } from '@components/Background';
 import LogoSvg from '@assets/logo.svg';
+import { useEnvironment } from '@components/context/EnvironmentContext';
 
 export const Home = () => {
   const {
@@ -44,6 +45,19 @@ export const Home = () => {
   const dialogsRef = useDialogsRef<DialogKeys>();
   const { t } = useTranslation();
 
+  function EnvironmentSelector() {
+    const { environment, setEnvironment } = useEnvironment();
+
+    return (
+      <div>
+        <h3>Environnement actuel : {environment}</h3>
+
+        <button onClick={() => setEnvironment('stable')}>Stable</button>
+        <button onClick={() => setEnvironment('beta')}>Bêta</button>
+      </div>
+    );
+  }
+
   return (
     <AppContainer>
       <Titlebar />
@@ -52,11 +66,12 @@ export const Home = () => {
         <Background>
           <LogoSvg />
         </Background>
+
         {state !== 'editing_options' && <SocialBar socialLinks={configuration.socialLinks} />}
         <Header>
           <p>{t('game_made_with_psdk')}</p>
           {state !== 'install_checking' && state !== 'install_waiting' && state !== 'installing' && (
-            <p>{state === 'loading' ? t('config_loading') : `${t('version')} ${configuration.gameVersion}`}</p>
+            <p>{state === 'loading' ? t('config_loading') : `${t('version')} ${configuration ?? '0.0.0'}`}</p>
           )}
         </Header>
         <ActionContainer>
@@ -124,22 +139,23 @@ export const Home = () => {
               {hasPlayError.isError && <ErrorText>{`${t('failed_game')} ${hasPlayError.message ?? ''}`}</ErrorText>}
               {state === 'bad_licence' && <ErrorText>{t('bad_licence')}</ErrorText>}
               <Footer>
+                {EnvironmentSelector()}
                 {/*<SettingsButton onClick={() => handleEditingOptionsClick(true)} disabled={state !== 'update_waiting' && state !== 'play_waiting'} />*/}
                 <div />
                 <div className="right-button">
                   {(state === 'install_waiting' || state === 'installing') && (
-                    <PrimaryButton disabled={state === 'installing'} onClick={handleInstallClick}>
+                    <PrimaryButton disabled={state === 'installing'} onClick={handleInstallClick} tabIndex={0}>
                       {t('install')}
                     </PrimaryButton>
                   )}
                   {(state === 'update_waiting' || state === 'bad_licence') && (
-                    <PrimaryButton disabled={state !== 'update_waiting'} onClick={handleDownloadClick}>
+                    <PrimaryButton disabled={state !== 'update_waiting'} onClick={handleDownloadClick} tabIndex={0}>
                       {t('download')}
                     </PrimaryButton>
                   )}
                   {(state === 'play_waiting' || state === 'playing') && (
                     <>
-                      <PrimaryButton disabled={state === 'playing' || hasBinariesUpdateError.isError} onClick={handleStartClick}>
+                      <PrimaryButton disabled={state === 'playing' || hasBinariesUpdateError.isError} onClick={handleStartClick} tabIndex={0}>
                         {t('play')}
                       </PrimaryButton>
                       <Menu config={configuration} dialogsRef={dialogsRef} />
@@ -153,8 +169,8 @@ export const Home = () => {
           <Footer>
             <CloseButton onClick={() => handleEditingOptionsClick(false)} />
             <div className="right-button">
-              <GhostButton>{t('by_default')}</GhostButton>
-              <PrimaryButton>{t('save')}</PrimaryButton>
+              <GhostButton tabIndex={0}>{t('by_default')}</GhostButton>
+              <PrimaryButton tabIndex={0}>{t('save')}</PrimaryButton>
             </div>
           </Footer>
         )}

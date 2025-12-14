@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron';
 
 import { CheckGameInstallReturnType, GameConfiguration, LauncherError } from '@src/types';
+import { Environment } from '@components/context/EnvironmentContext';
 
 export const checkGameInstall = (installPath: string): Promise<CheckGameInstallReturnType> => ipcRenderer.invoke('check-game-install', installPath);
 export const initGameInstall = (installPath: string): Promise<LauncherError> => ipcRenderer.invoke('init-game-install', installPath);
@@ -13,8 +14,9 @@ export const onExtractProgress = (callback: (progress: number) => void) =>
 export const onExtractFailure = (callback: (errorMessage: string) => void) =>
   ipcRenderer.once('extract-game/failure', (_, errorMessage) => callback(errorMessage));
 export const requestGameFile = (payload: {
-  installUrl: GameConfiguration['installUrl'];
-  metadataUrl: GameConfiguration['metadataUrl'];
+  channel: Environment;
+  installUrl: string;
+  metadataUrl: string;
   installPath: GameConfiguration['installPath'];
 }) => ipcRenderer.send('request-game-file', payload);
 export const onRequestGameFileDone = (callback: () => void) => ipcRenderer.once('request-game-file/done', () => callback());

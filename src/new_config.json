@@ -1,0 +1,32 @@
+{
+  "gameName": "psdk_launcher",
+  "gamePath": "%appdata%/<game_name>/games/<channel>",
+  "channels": {
+    "stable": {
+      "gameUrl": "",
+      "gameMetaUrl": ""
+    },
+    "beta": {
+      "gameUrl": "",
+      "gameMetaUrl": ""
+    },
+    "dev": {
+      "gameUrl": "",
+      "gameMetaUrl": ""
+    },
+    "canary": {
+      "gameUrl": "",
+      "gameMetaUrl": ""
+    }
+  },
+  "socialLinks": {
+    "website": "https://pokemonworkshop.com/fr",
+    "discord": "https://discord.gg/0noB0gBDd91B8pMk",
+    "instagram": "https://instagram.com/pokemon.workshop/",
+    "x": "https://x.com/pokemonworkshop",
+    "facebook": "",
+    "youtube": "",
+    "tiktok": "",
+    "bluesky": ""
+  }
+}
