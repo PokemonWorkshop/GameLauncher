@@ -44,8 +44,8 @@ export const preloadIpcMain = () => {
   ipcMain.handle('init-game-install', async (_, installPath) => initGameInstall(installPath));
   ipcMain.handle('clean-game-install', async (_, installPath, removeGame) => cleanGameInstall(installPath, removeGame));
   ipcMain.on('extract-game', (event, installPath) => extractGame(event, installPath));
-  ipcMain.on('request-game-file', (event, { installUrl, metadataUrl, installPath }) =>
-    requestGameFile(event, { installUrl, metadataUrl, installPath }),
+  ipcMain.on('request-game-file', (event, { installPath, channel, installUrl, metadataUrl }) =>
+    requestGameFile(event, { installPath, channel, installUrl, metadataUrl }),
   );
   ipcMain.handle('check-need-to-update-binaries', async (_, gamePath) => {
     const checkResult = await checkNeedToUpdateBinaries(gamePath);

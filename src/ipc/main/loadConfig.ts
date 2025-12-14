@@ -27,13 +27,13 @@ const getLocalConfig = async (currentConfig: GameConfiguration): Promise<Pick<Ga
       fs.unlinkSync(configOldFilePath);
       const config = JSON.parse(fileData.toString());
       return {
-        gameVersion: config.game_version || currentConfig.gameVersion,
+        gameVersion: config.game_version || '0.0.0', //currentConfig.gameVersion,
       };
     } else if (fs.existsSync(configFilePath)) {
       const fileData = await fsPromise.readFile(configFilePath);
       const config = JSON.parse(fileData.toString());
       return {
-        gameVersion: config.game_version || currentConfig.gameVersion,
+        gameVersion: config.game_version || '0.0.0', //currentConfig.gameVersion,
       };
     }
   } catch (e) {

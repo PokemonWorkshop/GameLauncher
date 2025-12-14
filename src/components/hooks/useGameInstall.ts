@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { GameConfiguration, GameInstallProgress, LauncherError } from '@src/types';
+import { Environment, useEnvironment } from '@components/context/EnvironmentContext';
 
 type GameInstallStateObject =
   | { state: 'initializing' }
@@ -14,15 +15,17 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
   const [hasError, setHasError] = useState<LauncherError>({ isError: false });
   const [progress, setProgress] = useState<Omit<GameInstallProgress, 'state'>>({ progress: 0, rate: 0 });
   const gameInstall = window.launcherApi.gameInstall;
+  const { environment } = useEnvironment();
 
   useEffect(() => {
     if (!shouldInstall || !configuration) return;
-
+    const channel = environment || 'stable';
     switch (state.state) {
       case 'initializing':
         setHasError({ isError: false });
         setProgress({ progress: 0, rate: 0 });
-        gameInstall.initGameInstall(configuration.installPath).then((error) => {
+
+        gameInstall.initGameInstall(configuration.installPath.replace('<channel>', channel)).then((error) => {
           if (error.isError) {
             setHasError(error);
             setState({ state: 'cleaning', isError: true });
@@ -32,9 +35,10 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
         break;
       case 'downloading':
         gameInstall.requestGameFile({
-          installUrl: configuration.installUrl,
-          metadataUrl: configuration.metadataUrl,
-          installPath: configuration.installPath,
+          installUrl: configuration.channels[environment as Environment].installUrl,
+          metadataUrl: configuration.channels[environment as Environment].metadataUrl,
+          installPath: configuration.installPath.replace('<channel>', channel),
+          channel: environment
         });
         gameInstall.onRequestGameFileDone(() => setState({ state: 'extracting' }));
         gameInstall.onRequestGameFileProgress((progress, rate) => setProgress({ progress, rate }));
@@ -44,7 +48,7 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
         });
         break;
       case 'extracting':
-        gameInstall.extractGame(configuration.installPath);
+        gameInstall.extractGame(configuration.installPath.replace('<channel>', channel));
         gameInstall.onExtractDone(() => setState({ state: 'cleaning', isError: false }));
         gameInstall.onExtractProgress((progress) => setProgress({ progress, rate: 0 }));
         gameInstall.onExtractFailure((errorMessage) => {

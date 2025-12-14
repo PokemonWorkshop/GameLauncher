@@ -6,6 +6,7 @@ import MenuIconSvg from '@assets/menu_icon.svg';
 import MinimizeIconSvg from '@assets/minimize_icon.svg';
 
 import { useTranslation } from 'react-i18next';
+import { useEnvironment } from './context/EnvironmentContext';
 
 type TitlebarContainerProps = {
   isOpen: boolean;
@@ -26,6 +27,13 @@ const TitlebarContainer = styled.div<TitlebarContainerProps>`
     ${({ theme }) => theme.fonts.label.small}
     font-size: 14px;
     margin-left: 8px;
+  }
+
+  .subtitle {
+    ${({ theme }) => theme.fonts.label.small};
+    color: ${({ theme }) => theme.color.text.disabled};
+    cursor: pointer;
+    -webkit-app-region: no-drag;
   }
 
   .action-container {
@@ -114,6 +122,7 @@ export const Titlebar = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [version, setVersion] = useState('');
   const { t } = useTranslation();
+  const { environment } = useEnvironment();
 
   useEffect(() => {
     window.launcherApi.version().then((version) => setVersion(version));
@@ -133,15 +142,21 @@ export const Titlebar = () => {
 
   return window.launcherApi.platform() === 'win32' ? (
     <TitlebarContainer isOpen={isOpen}>
-      <span className="title">Game Launcher</span>
+      <div>
+        <span className="title">Game Launcher</span>
+        <a onClick={() => window.launcherApi.externalWindow('https://www.google.com/')} target="_blank" className="subtitle">
+          {' '}
+          • {environment}
+        </a>
+      </div>
       <div className="action-container">
         <div className="menu-icon" onClick={onClick}>
           <MenuIconSvg />
         </div>
-        <div className="minimize" onClick={window.launcherApi.minimizeLauncher}>
+        <div className="minimize" onClick={window.launcherApi.minimizeLauncher} tabIndex={0}>
           <MinimizeIconSvg />
         </div>
-        <div className="close" onClick={window.launcherApi.closeLauncher}>
+        <div className="close" onClick={window.launcherApi.closeLauncher} tabIndex={0}>
           <CloseIconAppSvg />
         </div>
       </div>
