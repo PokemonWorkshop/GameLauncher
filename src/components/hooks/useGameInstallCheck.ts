@@ -25,7 +25,7 @@ export const useGameInstallCheck = (shouldCheckInstall: boolean, onInstallCheckD
 
     const promise = () => {
       setDoneChecking(false);
-      window.launcherApi.gameInstall.checkGameInstall(configuration['installPath'].replace('<channel>', environment)).then((checkResult) => {
+      window.launcherApi.gameInstall.checkGameInstall(configuration['gamePath'], environment).then((checkResult) => {
         setCheckResult(checkResult);
         if (checkResult.error) setHasGameInstallCheckError(checkResult.error);
         setDoneChecking(true);

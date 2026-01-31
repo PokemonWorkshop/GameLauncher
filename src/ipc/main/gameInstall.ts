@@ -8,13 +8,23 @@ import fsPromise from 'fs/promises';
 import path from 'path';
 import { ZipFile } from 'yauzl';
 
-import { CheckGameInstallReturnType, GameConfiguration, GameInstallMetadata, LauncherError } from '@src/types';
+import {
+  CheckGameInstallReturnType,
+  GameChannelConfiguration,
+  GameConfiguration,
+  GameEnvironment,
+  GameInstallMetadata,
+  LauncherError,
+} from '@src/types';
 
 const GAME_PROJECT_PATH = '.temp/game.zip';
 
-export const checkGameInstall = async (installPath: GameConfiguration['gamePath']): Promise<CheckGameInstallReturnType> => {
+export const checkGameInstall = async (
+  gamePath: GameConfiguration['gamePath'],
+  environment: GameEnvironment,
+): Promise<CheckGameInstallReturnType> => {
   log.info('check-game-install');
-  const pathInstall = installPath.replace('<channel>', 'stable');
+  const pathInstall = gamePath.replace('<channel>', environment);
   try {
     // if the folder .temp exists, we can supposed that the install have been a problem or interrupted, so the install folder is deleted
     const result = fs.existsSync(pathInstall) && !fs.existsSync(path.join(pathInstall, '.temp'));
@@ -37,9 +47,9 @@ export const checkGameInstall = async (installPath: GameConfiguration['gamePath'
   }
 };
 
-export const initGameInstall = async (installPath: GameConfiguration['gamePath']): Promise<LauncherError> => {
+export const initGameInstall = async (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment): Promise<LauncherError> => {
   log.info('init-game-install');
-  const pathInstall = installPath.replace('<channel>', 'stable');
+  const pathInstall = gamePath.replace('<channel>', environment);
   try {
     fs.mkdirSync(path.join(pathInstall, '.temp'), { recursive: true });
     return {
@@ -54,9 +64,13 @@ export const initGameInstall = async (installPath: GameConfiguration['gamePath']
   }
 };
 
-export const cleanGameInstall = async (installPath: GameConfiguration['gamePath'], removeGame: boolean): Promise<LauncherError> => {
+export const cleanGameInstall = async (
+  gamePath: GameConfiguration['gamePath'],
+  environment: GameEnvironment,
+  removeGame: boolean,
+): Promise<LauncherError> => {
   log.info('clean-game-install');
-  const pathInstall = installPath.replace('<channel>', 'stable');
+  const pathInstall = gamePath.replace('<channel>', environment);
   try {
     const tempPath = path.join(pathInstall, '.temp');
     if (fs.existsSync(tempPath) && !removeGame) fs.rmSync(tempPath, { recursive: true });
@@ -73,9 +87,9 @@ export const cleanGameInstall = async (installPath: GameConfiguration['gamePath'
   }
 };
 
-export const extractGame = async (event: IpcMainEvent, installPath: GameConfiguration['gamePath']) => {
+export const extractGame = async (event: IpcMainEvent, installPath: GameConfiguration['gamePath'], environment: GameEnvironment) => {
   log.info('extract-game');
-  const pathInstall = installPath.replace('<channel>', 'stable');
+  const pathInstall = installPath.replace('<channel>', environment);
   const countEntry = { value: 1 };
 
   try {
@@ -94,8 +108,8 @@ export const extractGame = async (event: IpcMainEvent, installPath: GameConfigur
   }
 };
 
-const checkGameFile = async (installPath: GameConfiguration['gamePath'], hash: string) => {
-  const pathInstall = installPath.replace('<channel>', 'stable');
+const checkGameFile = async (installPath: GameConfiguration['gamePath'], environment: GameEnvironment, hash: string) => {
+  const pathInstall = installPath.replace('<channel>', environment);
   const filename = path.join(pathInstall, '.temp/game.zip');
   if (!fs.existsSync(filename)) return false;
 
@@ -109,10 +123,10 @@ const checkGameFile = async (installPath: GameConfiguration['gamePath'], hash: s
 export const requestGameFile = (
   event: IpcMainEvent,
   payload: {
-    installPath: string;
-    channel: 'stable' | 'beta';
-    installUrl: string;
-    metadataUrl: string;
+    gamePath: GameConfiguration['gamePath'];
+    environment: GameEnvironment;
+    installUrl: GameChannelConfiguration['installUrl'];
+    metadataUrl: GameChannelConfiguration['metadataUrl'];
   },
 ) => {
   log.info('request-game-file');
@@ -135,12 +149,12 @@ export const requestGameFile = (
           },
         })
         .then((response) => {
-          const pathInstallResolved = payload.installPath.replace('<channel>', payload.channel);
+          const pathInstallResolved = payload.gamePath.replace('<channel>', payload.environment);
           const writer = fs.createWriteStream(path.join(pathInstallResolved, GAME_PROJECT_PATH));
 
           writer.on('finish', async () => {
             event.sender.send('request-game-file/progress', { progress: 100, rate: 0 });
-            const result = await checkGameFile(pathInstallResolved, metadata.hash);
+            const result = await checkGameFile(pathInstallResolved, payload.environment, metadata.hash);
             if (result) event.sender.send('request-game-file/done');
             else event.sender.send('request-game-file/failure', 'Bad signature');
           });

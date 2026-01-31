@@ -25,7 +25,7 @@ export const preloadIpcMain = () => {
   ipcMain.handle('request-file/state-report', () => getRequestStateReport());
   ipcMain.handle('request-file/data', (_, encoding) => getRequestData(encoding));
   ipcMain.handle('check-files', (event, projectPath, filesToCheck, filesToTest) => checkFiles(projectPath, filesToCheck, filesToTest, event));
-  ipcMain.on('start-game', (event, gamePath) => startGame(gamePath, event));
+  ipcMain.on('start-game', (event, gamePath, environment) => startGame(gamePath, environment, event));
   ipcMain.on('external-window', (_, arg) => shell.openExternal(arg));
   ipcMain.handle('save-file', (_, path, data) => saveFile(path, data));
   ipcMain.handle('estimate-file-size', (_, path) => estimateFileSize(path));
@@ -37,15 +37,15 @@ export const preloadIpcMain = () => {
   });
   ipcMain.handle('version', () => app.getVersion());
   ipcMain.handle('quit-and-install', () => autoUpdater.quitAndInstall());
-  ipcMain.handle('check-game-install', async (_, installPath) => {
-    const checkResult = await checkGameInstall(installPath);
+  ipcMain.handle('check-game-install', async (_, gamePath, environment) => {
+    const checkResult = await checkGameInstall(gamePath, environment);
     return checkResult;
   });
-  ipcMain.handle('init-game-install', async (_, installPath) => initGameInstall(installPath));
-  ipcMain.handle('clean-game-install', async (_, installPath, removeGame) => cleanGameInstall(installPath, removeGame));
-  ipcMain.on('extract-game', (event, installPath) => extractGame(event, installPath));
-  ipcMain.on('request-game-file', (event, { installPath, channel, installUrl, metadataUrl }) =>
-    requestGameFile(event, { installPath, channel, installUrl, metadataUrl }),
+  ipcMain.handle('init-game-install', async (_, gamePath, environment) => initGameInstall(gamePath, environment));
+  ipcMain.handle('clean-game-install', async (_, gamePath, environment, removeGame) => cleanGameInstall(gamePath, environment, removeGame));
+  ipcMain.on('extract-game', (event, gamePath, environment) => extractGame(event, gamePath, environment));
+  ipcMain.on('request-game-file', (event, { gamePath, environment, installUrl, metadataUrl }) =>
+    requestGameFile(event, { gamePath, environment, installUrl, metadataUrl }),
   );
   ipcMain.handle('check-need-to-update-binaries', async (_, gamePath) => {
     const checkResult = await checkNeedToUpdateBinaries(gamePath);
