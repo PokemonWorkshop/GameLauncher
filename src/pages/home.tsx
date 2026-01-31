@@ -16,12 +16,12 @@ import { useTranslation } from 'react-i18next';
 import { Title } from '@components/home/Title';
 import { Background } from '@components/Background';
 import LogoSvg from '@assets/logo.svg';
-import { useEnvironment } from '@components/context/EnvironmentContext';
 
 export const Home = () => {
   const {
     state,
     configuration,
+    environment,
     gameInstallProgress,
     binariesUpdateProgress,
     gameUninstallProgress,
@@ -41,19 +41,18 @@ export const Home = () => {
     handleInstallClick,
     handleEditingOptionsClick,
     handleUninstallClick,
+    handleEnvironmentClick,
   } = useLauncherContext();
   const dialogsRef = useDialogsRef<DialogKeys>();
   const { t } = useTranslation();
 
   function EnvironmentSelector() {
-    const { environment, setEnvironment } = useEnvironment();
-
     return (
       <div>
         <h3>Environnement actuel : {environment}</h3>
 
-        <button onClick={() => setEnvironment('stable')}>Stable</button>
-        <button onClick={() => setEnvironment('beta')}>Bêta</button>
+        <button onClick={() => handleEnvironmentClick('stable')}>Stable</button>
+        <button onClick={() => handleEnvironmentClick('beta')}>Bêta</button>
       </div>
     );
   }

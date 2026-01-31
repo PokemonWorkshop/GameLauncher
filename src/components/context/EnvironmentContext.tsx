@@ -1,20 +1,20 @@
-import { GameConfiguration, ValidChannels } from '@src/types';
+import { GameEnvironment } from '@src/types';
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-const STORAGE_KEY = 'app_environment';
+export const STORAGE_KEY = 'app_environment';
 
 type EnvironmentContextType = {
-  environment: ValidChannels<GameConfiguration>;
-  setEnvironment: (e: ValidChannels<GameConfiguration>) => Promise<void>;
+  environment: GameEnvironment;
+  setEnvironment: (env: GameEnvironment) => Promise<void>;
 };
 
 const EnvironmentContext = createContext<EnvironmentContextType | null>(null);
 
 export function EnvironmentProvider({ children }: { children: ReactNode }) {
-  const [environment, setEnvironmentState] = useState<ValidChannels<GameConfiguration>>('stable');
+  const [environment, setEnvironmentState] = useState<GameEnvironment>('stable');
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as ValidChannels<GameConfiguration> | null;
+    const saved = localStorage.getItem(STORAGE_KEY) as GameEnvironment | null;
     if (saved) setEnvironmentState(saved);
   }, []);
 
@@ -24,13 +24,13 @@ export function EnvironmentProvider({ children }: { children: ReactNode }) {
     return token === 'VALID_BETA_TOKEN';
   };
 
-  const setEnvironment = async (value: ValidChannels<GameConfiguration>) => {
-    if (value === 'beta') {
+  const setEnvironment = async (env: GameEnvironment) => {
+    /*if (value === 'beta') {
       const ok = await verifyBetaAccess();
       if (!ok) return;
-    }
-    setEnvironmentState(value);
-    localStorage.setItem(STORAGE_KEY, value);
+    }*/
+    setEnvironmentState(env);
+    localStorage.setItem(STORAGE_KEY, env);
   };
 
   return <EnvironmentContext.Provider value={{ environment, setEnvironment }}>{children}</EnvironmentContext.Provider>;
