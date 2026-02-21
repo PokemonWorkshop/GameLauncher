@@ -19,6 +19,12 @@ export const useGameInstallCheck = (shouldCheckInstall: boolean, onInstallCheckD
   const [doneChecking, setDoneChecking] = useState<boolean>(false);
   const [hasGameInstallCheckError, setHasGameInstallCheckError] = useState<LauncherError>({ isError: false });
 
+  const resetState = () => {
+    setCheckResult(defaultCheckResult);
+    setDoneChecking(false);
+    setHasGameInstallCheckError({ isError: false });
+  };
+
   useEffect(() => {
     if (!configuration) return voidCleanup;
     if (!shouldCheckInstall) return voidCleanup;
@@ -41,5 +47,6 @@ export const useGameInstallCheck = (shouldCheckInstall: boolean, onInstallCheckD
     doneInstallChecking: doneChecking,
     isGameInstalled: checkResult.result,
     hasGameInstallCheckError,
+    resetGameInstallCheck: resetState,
   };
 };

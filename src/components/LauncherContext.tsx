@@ -188,12 +188,12 @@ const useLauncherContextService = (): LauncherContext => {
   };
 
   const { isLoading, configuration } = useGameConfiguration(flipFlapConfig);
-  const { doneInstallChecking, isGameInstalled, hasGameInstallCheckError } = useGameInstallCheck(
+  const { doneInstallChecking, isGameInstalled, hasGameInstallCheckError, resetGameInstallCheck } = useGameInstallCheck(
     shouldCheckInstall,
     onInstallCheckDone,
     configuration,
   );
-  const { hasGameInstallError, gameInstallProgress } = useGameInstall(shouldInstall, onGameInstallDone, configuration);
+  const { hasGameInstallError, gameInstallProgress, resetGameInstall } = useGameInstall(shouldInstall, onGameInstallDone, configuration);
   const { isValidLicence, doneLicenceChecking, resetLicenceCheck } = useCheckLicence(isGameInstalled, configuration);
   const { updateCheckProgress, filesToDownload, doneChecking, hasGameUpdateCheckError, resetGameUpdateCheck } = useGameUpdateCheck(
     isValidLicence,
@@ -225,7 +225,13 @@ const useLauncherContextService = (): LauncherContext => {
   };
 
   const changeEnvironment = (env: GameEnvironment) => {
+    resetGameInstallCheck();
+    resetGameInstall();
     reset();
+    setShouldCheckInstall(true);
+    setShouldInstall(false);
+    setShouldDownload(false);
+    setShouldUpdateBinaries(false);
     setEnvironment(env);
   };
 
