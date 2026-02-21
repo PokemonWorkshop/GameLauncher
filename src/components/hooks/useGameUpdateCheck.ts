@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { GameConfiguration, LauncherError } from '@src/types';
+import type { GameConfiguration, GameEnvironment, LauncherError } from '@src/types';
 import { useTranslation } from 'react-i18next';
 import { voidCleanup } from './voidCleanup';
-import { Environment, useEnvironment } from '@components/context/EnvironmentContext';
+import { useEnvironment } from '@components/context/EnvironmentContext';
 
 export const useGameUpdateCheck = (
   isValidLicence: boolean,
@@ -58,7 +58,7 @@ export const useGameUpdateCheck = (
     requestFile.onRequestProgress((progress) => setUpdateCheckProgress(progress > 1 ? 100 : progress * 100));
 
     requestFile.requestFile(
-      new URL(`versions/${configuration.gameVersion}.json?v=${+new Date()}`, configuration.channels[environment as Environment].gameUrl).href,
+      new URL(`versions/${configuration.gameVersion}.json?v=${+new Date()}`, configuration.channels[environment as GameEnvironment].gameUrl).href,
     );
 
     return requestFile.removeEventListeners;

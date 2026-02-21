@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { GameConfiguration, GameInstallProgress, LauncherError } from '@src/types';
+import type { GameConfiguration, GameInstallProgress, LauncherError } from '@src/types';
 import { useEnvironment } from '@components/context/EnvironmentContext';
 
 type GameInstallStateObject =
@@ -16,6 +16,12 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
   const [progress, setProgress] = useState<Omit<GameInstallProgress, 'state'>>({ progress: 0, rate: 0 });
   const gameInstall = window.launcherApi.gameInstall;
   const { environment } = useEnvironment();
+
+  const resetState = () => {
+    setState({ state: 'initializing' });
+    setHasError({ isError: false });
+    setProgress({ progress: 0, rate: 0 });
+  };
 
   useEffect(() => {
     if (!shouldInstall || !configuration) return;
@@ -72,5 +78,6 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
   return {
     hasGameInstallError: hasError,
     gameInstallProgress: { ...progress, state: state.state },
+    resetGameInstall: resetState,
   };
 };
