@@ -10,8 +10,8 @@ export type GameChannelConfiguration = {
   gameVersion: string;
   installUrl: string;
   metadataUrl: string;
+  binariesUrl: string;
   tokenRequired?: boolean;
-  binariesUrl?: string;
 };
 
 export type GameConfiguration = {
@@ -140,22 +140,14 @@ interface IGameInstall {
 }
 
 interface IBinariesUpdate {
-  checkNeedToUpdateBinaries: (gamePath: GameConfiguration['gamePath']) => Promise<CheckNeedToUpdateBinariesReturnType>;
-  initBinariesUpdate: (installPath: GameConfiguration['gamePath'], gamePath: GameConfiguration['gamePath']) => Promise<LauncherError>;
-  cleanBinariesUpdate: (
-    installPath: GameConfiguration['gamePath'],
-    gamePath: GameConfiguration['gamePath'],
-    removeBinaries: boolean,
-  ) => Promise<LauncherError>;
-  requestBinariesFile: (payload: {
-    binariesUrl: string;
-    installPath: GameConfiguration['gamePath'];
-    gamePath: GameConfiguration['gamePath'];
-  }) => void;
+  checkNeedToUpdateBinaries: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => Promise<CheckNeedToUpdateBinariesReturnType>;
+  initBinariesUpdate: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => Promise<LauncherError>;
+  cleanBinariesUpdate: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment, removeBinaries: boolean) => Promise<LauncherError>;
+  requestBinariesFile: (payload: { gamePath: GameConfiguration['gamePath']; binariesUrl: string; environment: GameEnvironment }) => void;
   onRequestBinariesFileDone: (callback: () => void) => void;
   onRequestBinariesFileProgress: (callback: (progress: number, rate: number) => void) => void;
   onRequestBinariesFileFailure: (callback: (errorMessage: string) => void) => void;
-  extractBinaries: (installPath: GameConfiguration['gamePath'], gamePath: GameConfiguration['gamePath']) => void;
+  extractBinaries: (payload: { gamePath: GameConfiguration['gamePath']; environment: GameEnvironment }) => void;
   onExtractBinariesDone: (callback: () => void) => void;
   onExtractBinariesProgress: (callback: (progress: number) => void) => void;
   onExtractBinariesFailure: (callback: (errorMessage: string) => void) => void;

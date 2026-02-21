@@ -23,6 +23,7 @@ const defaultConfiguration: GameConfiguration = {
       gameVersion: '0.0.0',
       installUrl: '',
       metadataUrl: '',
+      binariesUrl: '',
     },
   },
   socialLinks: {

@@ -87,14 +87,14 @@ export const cleanGameInstall = async (
   }
 };
 
-export const extractGame = async (event: IpcMainEvent, installPath: GameConfiguration['gamePath'], environment: GameEnvironment) => {
+export const extractGame = async (event: IpcMainEvent, gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => {
   log.info('extract-game');
-  const pathInstall = installPath.replace('<channel>', environment);
+  const installPath = gamePath.replace('<channel>', environment);
   const countEntry = { value: 1 };
 
   try {
-    await extract(path.join(pathInstall, GAME_PROJECT_PATH), {
-      dir: pathInstall,
+    await extract(path.join(installPath, GAME_PROJECT_PATH), {
+      dir: installPath,
       onEntry: (_, zipFile: ZipFile) => {
         const progress = Number(((countEntry.value / zipFile.entryCount) * 100).toFixed(1));
         event.sender.send('extract-game/progress', progress);
