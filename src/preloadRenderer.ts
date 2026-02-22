@@ -11,7 +11,7 @@ import { ILauncherAPI } from './types';
 
 const launcherApi: ILauncherAPI = {
   testMessage: (message) => ipcRenderer.send('test-message', message),
-  loadConfig: () => ipcRenderer.invoke('load-config'),
+  loadConfig: (environment) => ipcRenderer.invoke('load-config', environment),
   estimateFileSize: (path) => ipcRenderer.invoke('estimate-file-size', path),
   checkFiles: (projectPath, filesToCheck, filesToTest) => ipcRenderer.invoke('check-files', projectPath, filesToCheck, filesToTest),
   externalWindow: (link) => ipcRenderer.send('external-window', link),

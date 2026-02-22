@@ -18,8 +18,9 @@ const getLocalConfig = async (
   currentConfig: GameConfiguration,
   environment: GameEnvironment,
 ): Promise<Pick<GameChannelConfiguration, 'gameVersion'>> => {
-  const configFilePath = path.join(currentConfig.gamePath, 'config.json');
-  const configOldFilePath = path.join(currentConfig.gamePath.split('/').slice(0, -2).join('/'), 'config.json');
+  const gamePathFixed = currentConfig.gamePath.replace('<channel>', environment);
+  const configFilePath = path.join(gamePathFixed, 'config.json');
+  const configOldFilePath = path.join(gamePathFixed.split('/').slice(0, -2).join('/'), 'config.json');
 
   try {
     if (fs.existsSync(configOldFilePath)) {
@@ -28,13 +29,13 @@ const getLocalConfig = async (
       fs.unlinkSync(configOldFilePath);
       const config = JSON.parse(fileData.toString());
       return {
-        gameVersion: config.channels[environment].gameVersion || currentConfig.channels[environment].gameVersion,
+        gameVersion: config.game_version || currentConfig.channels[environment].gameVersion,
       };
     } else if (fs.existsSync(configFilePath)) {
       const fileData = await fsPromise.readFile(configFilePath);
       const config = JSON.parse(fileData.toString());
       return {
-        gameVersion: config.channels[environment].gameVersion || currentConfig.channels[environment].gameVersion,
+        gameVersion: config.game_version || currentConfig.channels[environment].gameVersion,
       };
     }
   } catch (e) {
@@ -44,9 +45,14 @@ const getLocalConfig = async (
   return { gameVersion: currentConfig.channels[environment].gameVersion };
 };
 
-export const loadConfig = async (): Promise<GameConfiguration> => {
+export const loadConfig = async (environment: GameEnvironment): Promise<GameConfiguration> => {
   const fixedConfig = fixConfigPath(config);
-  //const { gameVersion } = await getLocalConfig(fixedConfig, environment);
+  const { gameVersion } = await getLocalConfig(fixedConfig, environment);
+
+  fixedConfig.channels[environment] = {
+    ...fixedConfig.channels[environment],
+    gameVersion,
+  };
 
   return {
     ...fixedConfig,

@@ -164,7 +164,7 @@ interface IGameUninstall {
 
 export interface ILauncherAPI {
   testMessage: (message: unknown) => void;
-  loadConfig: () => Promise<GameConfiguration>;
+  loadConfig: (environment: GameEnvironment) => Promise<GameConfiguration>;
   estimateFileSize: (path: string) => Promise<number>;
   checkFiles: (projectPath: string, filesToCheck: FileHashes, files: string[]) => Promise<string[]>;
   externalWindow: (link: string) => void;

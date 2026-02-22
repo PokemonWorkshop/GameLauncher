@@ -70,7 +70,7 @@ export const Home = () => {
         <Header>
           <p>{t('game_made_with_psdk')}</p>
           {state !== 'install_checking' && state !== 'install_waiting' && state !== 'installing' && (
-            <p>{state === 'loading' ? t('config_loading') : `${t('version')} ${configuration ?? '0.0.0'}`}</p>
+            <p>{state === 'loading' ? t('config_loading') : `${t('version')} ${configuration.channels[environment].gameVersion ?? '0.0.0'}`}</p>
           )}
         </Header>
         <ActionContainer>
