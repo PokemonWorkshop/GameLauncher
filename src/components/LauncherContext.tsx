@@ -226,6 +226,7 @@ const useLauncherContextService = (): LauncherContext => {
   };
 
   const changeEnvironment = (env: GameEnvironment) => {
+    setFlipFlapConfig(!flipFlapConfig);
     resetGameInstallCheck();
     resetGameInstall();
     reset();

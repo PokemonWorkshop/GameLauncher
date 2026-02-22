@@ -17,8 +17,8 @@ import { gameUninstall } from '@ipcMain/gameUninstall';
 
 export const preloadIpcMain = () => {
   ipcMain.on('test-message', (_, message) => log.info(message));
-  ipcMain.handle('load-config', async () => {
-    const config = await loadConfig();
+  ipcMain.handle('load-config', async (_, environment) => {
+    const config = await loadConfig(environment);
     return config;
   });
   ipcMain.on('request-file', (event, url) => requestFile(new URL(url), event));
