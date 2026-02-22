@@ -23,7 +23,7 @@ export const checkGameInstall = async (
   gamePath: GameConfiguration['gamePath'],
   environment: GameEnvironment,
 ): Promise<CheckGameInstallReturnType> => {
-  log.info('check-game-install');
+  log.info('check-game-install', { gamePath, environment });
   const pathInstall = gamePath.replace('<channel>', environment);
   try {
     // if the folder .temp exists, we can supposed that the install have been a problem or interrupted, so the install folder is deleted
@@ -48,7 +48,7 @@ export const checkGameInstall = async (
 };
 
 export const initGameInstall = async (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment): Promise<LauncherError> => {
-  log.info('init-game-install');
+  log.info('init-game-install', { gamePath, environment });
   const pathInstall = gamePath.replace('<channel>', environment);
   try {
     fs.mkdirSync(path.join(pathInstall, '.temp'), { recursive: true });
@@ -69,7 +69,7 @@ export const cleanGameInstall = async (
   environment: GameEnvironment,
   removeGame: boolean,
 ): Promise<LauncherError> => {
-  log.info('clean-game-install');
+  log.info('clean-game-install', { gamePath, environment, removeGame });
   const pathInstall = gamePath.replace('<channel>', environment);
   try {
     const tempPath = path.join(pathInstall, '.temp');
@@ -88,7 +88,7 @@ export const cleanGameInstall = async (
 };
 
 export const extractGame = async (event: IpcMainEvent, gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => {
-  log.info('extract-game');
+  log.info('extract-game', { gamePath, environment });
   const installPath = gamePath.replace('<channel>', environment);
   const countEntry = { value: 1 };
 

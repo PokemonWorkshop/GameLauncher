@@ -155,7 +155,7 @@ interface IBinariesUpdate {
 }
 
 interface IGameUninstall {
-  gameUninstall: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => void;
+  gameUninstall: (payload: { gamePath: GameConfiguration['gamePath']; environment: GameEnvironment }) => void;
   onGameUninstallDone: (callback: () => void) => void;
   onGameUninstallProgress: (callback: (progress: number) => void) => void;
   onGameUninstallFailure: (callback: (errorMessage: string) => void) => void;

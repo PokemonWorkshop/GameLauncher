@@ -1,7 +1,8 @@
-import { GameConfiguration } from '@src/types';
+import { GameConfiguration, GameEnvironment } from '@src/types';
 import { ipcRenderer } from 'electron';
 
-export const gameUninstall = (installPath: GameConfiguration['installPath']) => ipcRenderer.send('game-uninstall', installPath);
+export const gameUninstall = (payload: { gamePath: GameConfiguration['gamePath']; environment: GameEnvironment }) =>
+  ipcRenderer.send('game-uninstall', payload);
 export const onGameUninstallDone = (callback: () => void) => ipcRenderer.once('game-uninstall/done', () => callback());
 export const onGameUninstallProgress = (callback: (progress: number) => void) =>
   ipcRenderer.on('game-uninstall/progress', (_, progress) => callback(progress));
