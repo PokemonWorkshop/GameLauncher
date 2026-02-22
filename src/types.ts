@@ -175,7 +175,7 @@ export interface ILauncherAPI {
   readLicence: (currentConfig: GameConfiguration) => Promise<Licence>;
   version: () => Promise<string>;
   quitAndInstall: () => Promise<void>;
-  openGameFolder: (gamePath: GameConfiguration['gamePath']) => void;
+  openGameFolder: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => void;
   createDesktopShortcut: () => void;
   checkUpdate: () => void;
   requestUpdateDownloaded: {

@@ -22,7 +22,7 @@ const launcherApi: ILauncherAPI = {
   readLicence: (currentConfig) => ipcRenderer.invoke('read-licence', currentConfig),
   version: () => ipcRenderer.invoke('version'),
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
-  openGameFolder: (gamePath) => ipcRenderer.send('open-game-folder', gamePath),
+  openGameFolder: (gamePath, environment) => ipcRenderer.send('open-game-folder', gamePath, environment),
   createDesktopShortcut: () => ipcRenderer.send('create-desktop-shortcut'),
   checkUpdate: () => ipcRenderer.send('game-launcher-check-update'),
   requestUpdateDownloaded: {

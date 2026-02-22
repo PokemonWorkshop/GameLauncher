@@ -59,7 +59,7 @@ export const preloadIpcMain = () => {
     requestBinariesFile(event, { gamePath, binariesUrl, environment }),
   );
   ipcMain.on('extract-binaries', (event, { gamePath, environment }) => extractBinaries(event, { gamePath, environment }));
-  ipcMain.on('open-game-folder', (_, gamePath) => openGameFolder(gamePath));
+  ipcMain.on('open-game-folder', (_, gamePath, environment) => openGameFolder(gamePath, environment));
   ipcMain.on('create-desktop-shortcut', () => createDesktopShortcut());
   ipcMain.on('game-uninstall', (event, { gamePath, environment }) => gameUninstall(event, { gamePath, environment }));
   ipcMain.once('game-launcher-check-update', () => app.isPackaged && autoUpdater.checkForUpdates());
