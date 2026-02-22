@@ -57,9 +57,9 @@ export const useGameUpdateCheck = (
 
     requestFile.onRequestProgress((progress) => setUpdateCheckProgress(progress > 1 ? 100 : progress * 100));
 
-    requestFile.requestFile(
-      new URL(`versions/${configuration.gameVersion}.json?v=${+new Date()}`, configuration.channels[environment as GameEnvironment].gameUrl).href,
-    );
+    const gameVersion = configuration.channels[environment as GameEnvironment].gameVersion;
+    const gameUrl = configuration.channels[environment as GameEnvironment].gameUrl;
+    requestFile.requestFile(new URL(`versions/${gameVersion}.json?v=${+new Date()}`, gameUrl).href);
 
     return requestFile.removeEventListeners;
   }, [isValidLicence]);
