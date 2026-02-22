@@ -23,7 +23,7 @@ const getSpawnArgs = (rubyPath: string): [string, string[]] => {
 };
 
 export const startGame = (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment, event: IpcMainEvent) => {
-  const pathInstall = path.join(gamePath.replace('<channel>', environment), 'launcher_release/games/ForetEternelle'); // TODO: hotfix
+  const pathInstall = gamePath.replace('<channel>', environment);
 
   if (childProcess && childProcess.exitCode === null) {
     return event.sender.send('start-game/result', false);
