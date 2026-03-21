@@ -6,7 +6,7 @@ import { ProgressBar } from '@components/ProgressBar';
 import { SocialBar } from '@components/SocialBar';
 import { Titlebar } from '@components/Titlebar';
 import { UpdateBar } from '@components/UpdateBar';
-import { CloseButton, GhostButton, PrimaryButton } from '@components/buttons';
+import { CloseButton, GhostButton, PrimaryButton, SettingsButton } from '@components/buttons';
 import { ActionContainer, AppContainer, Footer, Header, HomePageContainer } from '@components/home';
 import { ErrorText, FullWidthFooter } from '@components/home/Footer';
 import { Menu } from '@components/Menu';
@@ -41,21 +41,9 @@ export const Home = () => {
     handleInstallClick,
     handleEditingOptionsClick,
     handleUninstallClick,
-    handleEnvironmentClick,
   } = useLauncherContext();
   const dialogsRef = useDialogsRef<DialogKeys>();
   const { t } = useTranslation();
-
-  function EnvironmentSelector() {
-    return (
-      <div>
-        <h3>Environnement actuel : {environment}</h3>
-
-        <button onClick={() => handleEnvironmentClick('stable')}>Stable</button>
-        <button onClick={() => handleEnvironmentClick('beta')}>Bêta</button>
-      </div>
-    );
-  }
 
   return (
     <AppContainer>
@@ -75,7 +63,6 @@ export const Home = () => {
         </Header>
         <ActionContainer>
           {state !== 'editing_options' && <Title>Pokémon SDK</Title>}
-          {/*{state === 'editing_options' && <Settings />}*/}
         </ActionContainer>
         {state !== 'editing_options' &&
           (state === 'checking' ? (
@@ -138,9 +125,7 @@ export const Home = () => {
               {hasPlayError.isError && <ErrorText>{`${t('failed_game')} ${hasPlayError.message ?? ''}`}</ErrorText>}
               {state === 'bad_licence' && <ErrorText>{t('bad_licence')}</ErrorText>}
               <Footer>
-                {EnvironmentSelector()}
-                {/*<SettingsButton onClick={() => handleEditingOptionsClick(true)} disabled={state !== 'update_waiting' && state !== 'play_waiting'} />*/}
-                <div />
+                <SettingsButton onClick={() => dialogsRef.current?.openDialog('settings', true)} />
                 <div className="right-button">
                   {(state === 'install_waiting' || state === 'installing') && (
                     <PrimaryButton disabled={state === 'installing'} onClick={handleInstallClick} tabIndex={0}>
