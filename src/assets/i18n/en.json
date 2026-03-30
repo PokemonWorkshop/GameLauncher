@@ -48,12 +48,14 @@
   "settings_launcher_update_desc": "Allow automatic download of launcher updates.",
   "settings_game_version": "Game version to download",
   "settings_game_version_desc": "Choose the version the launcher should download. Some versions require an access key.",
-  "settings_channel_stable": "Eternal Forest - Public Demo",
-  "settings_channel_beta": "Eternal Forest - Closed Alpha",
-  "settings_launcher_title": "Eternal Forest Launcher",
+  "settings_channel_stable": "New Project - Public Demo",
+  "settings_channel_beta": "New Project - Closed Alpha",
+  "settings_launcher_title": "New Project Launcher",
   "settings_changelog": "View update changelog",
-  "settings_changelog_desc": "Choose the version the launcher should download. Some versions require an access key to be downloaded.",
+  "settings_changelog_desc": "The changelog lists the changes made by the different versions of the launcher.",
   "settings_open_changelog": "Open changelog",
   "settings_check_launcher_update": "Check for latest launcher version",
-  "settings_check": "Check"
+  "settings_check": "Check",
+  "settings_access_key": "Access key",
+  "settings_key_activated": "Access key activated"
 }
