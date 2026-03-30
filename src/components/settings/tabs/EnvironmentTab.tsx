@@ -73,7 +73,7 @@ const LicenceValidText = styled.span`
   color: rgba(55, 165, 133, 1);
 `;
 
-const RadioIcon = () => {
+const KeyIcon = () => {
   const theme = useTheme();
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -137,7 +137,7 @@ export const EnvironmentTab = ({ onEnvChange }: EnvironmentTabProps) => {
           </LicenceLabel>
           <LicenceInputRow>
             <span className="circle-icon">
-              <RadioIcon />
+              <KeyIcon />
             </span>
             <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" value={licence} onChange={(e) => setLicence(e.target.value)} />
             {licenceValid && (
