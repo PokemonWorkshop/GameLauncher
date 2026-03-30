@@ -8,6 +8,7 @@ import { theme } from '@src/theme';
 import { Home } from '@pages/home';
 
 import { LauncherContextProvider } from '@components/LauncherContext';
+import { EnvironmentProvider } from '@components/context/EnvironmentContext';
 import './i18n';
 
 // Note: Nested routes seem to not be supported with Memory Router so just declare the full path
@@ -15,12 +16,14 @@ import './i18n';
 const app = createRoot(document.getElementById('app') as HTMLElement);
 app.render(
   <ThemeProvider theme={theme}>
-    <LauncherContextProvider>
-      <HashRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </HashRouter>
-    </LauncherContextProvider>
+    <EnvironmentProvider>
+      <LauncherContextProvider>
+        <HashRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+          </Routes>
+        </HashRouter>
+      </LauncherContextProvider>
+    </EnvironmentProvider>
   </ThemeProvider>,
 );

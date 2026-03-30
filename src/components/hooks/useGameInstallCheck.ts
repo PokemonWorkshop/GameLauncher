@@ -4,6 +4,8 @@ import { CheckGameInstallReturnType, GameConfiguration, LauncherError } from '@s
 
 import { voidCleanup } from './voidCleanup';
 
+import { useEnvironment } from '@components/context/EnvironmentContext';
+
 const defaultCheckResult: CheckGameInstallReturnType = {
   result: false,
   error: {
@@ -12,9 +14,16 @@ const defaultCheckResult: CheckGameInstallReturnType = {
 };
 
 export const useGameInstallCheck = (shouldCheckInstall: boolean, onInstallCheckDone: () => void, configuration?: GameConfiguration) => {
+  const { environment } = useEnvironment();
   const [checkResult, setCheckResult] = useState<CheckGameInstallReturnType>(defaultCheckResult);
   const [doneChecking, setDoneChecking] = useState<boolean>(false);
   const [hasGameInstallCheckError, setHasGameInstallCheckError] = useState<LauncherError>({ isError: false });
+
+  const resetState = () => {
+    setCheckResult(defaultCheckResult);
+    setDoneChecking(false);
+    setHasGameInstallCheckError({ isError: false });
+  };
 
   useEffect(() => {
     if (!configuration) return voidCleanup;
@@ -22,7 +31,7 @@ export const useGameInstallCheck = (shouldCheckInstall: boolean, onInstallCheckD
 
     const promise = () => {
       setDoneChecking(false);
-      window.launcherApi.gameInstall.checkGameInstall(configuration['installPath']).then((checkResult) => {
+      window.launcherApi.gameInstall.checkGameInstall(configuration['gamePath'], environment).then((checkResult) => {
         setCheckResult(checkResult);
         if (checkResult.error) setHasGameInstallCheckError(checkResult.error);
         setDoneChecking(true);
@@ -38,5 +47,6 @@ export const useGameInstallCheck = (shouldCheckInstall: boolean, onInstallCheckD
     doneInstallChecking: doneChecking,
     isGameInstalled: checkResult.result,
     hasGameInstallCheckError,
+    resetGameInstallCheck: resetState,
   };
 };

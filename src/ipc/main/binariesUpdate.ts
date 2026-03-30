@@ -1,4 +1,11 @@
-import { GameConfiguration, BinariesVersion, LauncherError, CheckNeedToUpdateBinariesReturnType } from '@src/types';
+import {
+  GameConfiguration,
+  BinariesVersion,
+  LauncherError,
+  CheckNeedToUpdateBinariesReturnType,
+  GameEnvironment,
+  GameChannelConfiguration,
+} from '@src/types';
 import { IpcMainEvent } from 'electron';
 import log from 'electron-log';
 import fs from 'fs';
@@ -13,8 +20,9 @@ const BINARIES_TEMP_PATH = '.temp_binaries/binaries.7z';
 export const BINARIES_PATH = 'binaries';
 
 /** Clean useless old binaries because the new binaries is in the gamePath **/
-const cleanOldBinaries = async (installPath: GameConfiguration['installPath']) => {
-  const oldBinariesPath = path.join(installPath, 'launcher_release');
+// TODO: Maybe is not working...
+const cleanOldBinaries = async (gamePath: GameConfiguration['gamePath']) => {
+  const oldBinariesPath = path.join(gamePath.replace('<channel>', ''), 'launcher_release');
   if (!fs.existsSync(oldBinariesPath)) return;
 
   await ['msvcrt-ruby300.dll', 'ruby.exe', 'rubyw.exe'].reduce(async (lastPromise, filename) => {
@@ -68,8 +76,8 @@ const getPath7za = () => {
   return sevenBin.path7za;
 };
 
-const checkBinariesFile = async (installPath: GameConfiguration['installPath'], hash: string) => {
-  const filename = path.join(installPath, BINARIES_TEMP_PATH);
+const checkBinariesFile = async (gamePath: GameConfiguration['gamePath'], hash: string) => {
+  const filename = path.join(gamePath, BINARIES_TEMP_PATH);
   if (!fs.existsSync(filename)) return false;
 
   const data = await fsPromise.readFile(filename);
@@ -78,10 +86,14 @@ const checkBinariesFile = async (installPath: GameConfiguration['installPath'], 
   return hash.toUpperCase() === hashSum.digest('hex').toUpperCase();
 };
 
-export const checkNeedToUpdateBinaries = async (gamePath: GameConfiguration['gamePath']): Promise<CheckNeedToUpdateBinariesReturnType> => {
-  log.info('check-need-to-update-binaries', { gamePath });
+export const checkNeedToUpdateBinaries = async (
+  gamePath: GameConfiguration['gamePath'],
+  environment: GameEnvironment,
+): Promise<CheckNeedToUpdateBinariesReturnType> => {
+  log.info('check-need-to-update-binaries', { gamePath, environment });
   try {
-    const gameBinariesPath = path.join(gamePath, 'binaries_version.json');
+    const gamePathFixed = gamePath.replace('<channel>', environment);
+    const gameBinariesPath = path.join(gamePathFixed, 'binaries_version.json');
     const noError = {
       isError: false,
     };
@@ -92,7 +104,7 @@ export const checkNeedToUpdateBinaries = async (gamePath: GameConfiguration['gam
       };
     }
 
-    const binariesVersionPath = path.join(gamePath, BINARIES_PATH, 'version.json');
+    const binariesVersionPath = path.join(gamePathFixed, BINARIES_PATH, 'version.json');
     if (!fs.existsSync(binariesVersionPath)) {
       return {
         error: noError,
@@ -120,15 +132,13 @@ export const checkNeedToUpdateBinaries = async (gamePath: GameConfiguration['gam
   }
 };
 
-export const initBinariesUpdate = async (
-  installPath: GameConfiguration['installPath'],
-  gamePath: GameConfiguration['gamePath'],
-): Promise<LauncherError> => {
-  log.info('init-binaries-update', { installPath, gamePath });
+export const initBinariesUpdate = async (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment): Promise<LauncherError> => {
+  log.info('init-binaries-update', { gamePath, environment });
   try {
-    cleanOldBinaries(installPath);
-    await fsPromise.mkdir(path.join(installPath, '.temp_binaries'), { recursive: true });
-    const binariesPath = path.join(gamePath, BINARIES_PATH);
+    cleanOldBinaries(gamePath);
+    const gamePathFixed = gamePath.replace('<channel>', environment);
+    await fsPromise.mkdir(path.join(gamePathFixed, '.temp_binaries'), { recursive: true });
+    const binariesPath = path.join(gamePathFixed, BINARIES_PATH);
     if (fs.existsSync(binariesPath)) {
       await fsPromise.rm(binariesPath, { recursive: true });
     }
@@ -147,14 +157,15 @@ export const initBinariesUpdate = async (
 export const requestBinariesFile = (
   event: IpcMainEvent,
   payload: {
-    binariesUrl: GameConfiguration['binariesUrl'];
-    installPath: GameConfiguration['installPath'];
     gamePath: GameConfiguration['gamePath'];
+    binariesUrl: GameChannelConfiguration['binariesUrl'];
+    environment: GameEnvironment;
   },
 ) => {
   log.info('request-binaries-file', payload);
   try {
-    const gameBinariesData = fs.readFileSync(path.join(payload.gamePath, 'binaries_version.json')).toString('utf-8');
+    const gamePathFixed = payload.gamePath.replace('<channel>', payload.environment);
+    const gameBinariesData = fs.readFileSync(path.join(gamePathFixed, 'binaries_version.json')).toString('utf-8');
     const gameBinaries = JSON.parse(gameBinariesData) as BinariesVersion;
 
     axios
@@ -171,10 +182,10 @@ export const requestBinariesFile = (
             },
           })
           .then((response) => {
-            const writer = fs.createWriteStream(path.join(payload.installPath, BINARIES_TEMP_PATH));
+            const writer = fs.createWriteStream(path.join(gamePathFixed, BINARIES_TEMP_PATH));
             writer.on('finish', async () => {
               event.sender.send('request-binaries-file/progress', { progress: 100, rate: 0 });
-              const result = await checkBinariesFile(payload.installPath, getBinariesHash(latest));
+              const result = await checkBinariesFile(gamePathFixed, getBinariesHash(latest));
               if (result) event.sender.send('request-binaries-file/done');
               else event.sender.send('request-binaries-file/failure', 'Bad signature');
             });
@@ -195,10 +206,11 @@ export const requestBinariesFile = (
   }
 };
 
-export const extractBinaries = (event: IpcMainEvent, installPath: GameConfiguration['installPath'], gamePath: GameConfiguration['gamePath']) => {
-  log.info('extract-binaries', { installPath, gamePath });
+export const extractBinaries = (event: IpcMainEvent, payload: { gamePath: GameConfiguration['gamePath']; environment: GameEnvironment }) => {
+  log.info('extract-binaries', payload);
   try {
-    const zipStream = extractFull(path.join(installPath, BINARIES_TEMP_PATH), path.join(gamePath, BINARIES_PATH), {
+    const gamePathFixed = payload.gamePath.replace('<channel>', payload.environment);
+    const zipStream = extractFull(path.join(gamePathFixed, BINARIES_TEMP_PATH), path.join(gamePathFixed, BINARIES_PATH), {
       $progress: true,
       $bin: getPath7za(),
     });
@@ -218,17 +230,18 @@ export const extractBinaries = (event: IpcMainEvent, installPath: GameConfigurat
 };
 
 export const cleanBinariesUpdate = async (
-  installPath: GameConfiguration['installPath'],
   gamePath: GameConfiguration['gamePath'],
+  environment: GameEnvironment,
   removeBinaries: boolean,
 ): Promise<LauncherError> => {
-  log.info('clean-binaries-update', { installPath, gamePath, removeBinaries });
+  log.info('clean-binaries-update', { gamePath, environment, removeBinaries });
   try {
-    const tempPath = path.join(installPath, '.temp_binaries');
-    const binariesPath = path.join(gamePath, BINARIES_PATH);
+    const gamePathFixed = gamePath.replace('<channel>', environment);
+    const tempPath = path.join(gamePathFixed, '.temp_binaries');
+    const binariesPath = path.join(gamePathFixed, BINARIES_PATH);
     if (fs.existsSync(tempPath)) await fsPromise.rm(tempPath, { recursive: true });
     if (fs.existsSync(binariesPath) && removeBinaries) await fsPromise.rm(binariesPath, { recursive: true });
-    if (!removeBinaries) await fsPromise.copyFile(path.join(gamePath, 'binaries_version.json'), path.join(binariesPath, 'version.json'));
+    if (!removeBinaries) await fsPromise.copyFile(path.join(gamePathFixed, 'binaries_version.json'), path.join(binariesPath, 'version.json'));
     // remove site_ruby folder from binaries because the game doesn't start if it exists
     const siteRubyPath = path.join(binariesPath, 'lib/ruby/site_ruby');
     if (fs.existsSync(siteRubyPath)) await fsPromise.rm(siteRubyPath, { recursive: true });

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { DialogRef } from './DialogOverlay';
+import { useEnvironment } from './context/EnvironmentContext';
 
 const MenuContainer = styled.div`
   position: fixed;
@@ -69,6 +70,7 @@ export const Menu = ({ config, dialogsRef }: MenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const { environment } = useEnvironment();
   const className = isOpen ? 'open' : undefined;
   const isWindows = window.launcherApi.platform() === 'win32';
 
@@ -100,7 +102,9 @@ export const Menu = ({ config, dialogsRef }: MenuProps) => {
           {isWindows && (
             <span onClick={(event) => closeMenu(event, () => window.launcherApi.createDesktopShortcut())}>{t('menu_create_desktop_shortcut')}</span>
           )}
-          <span onClick={(event) => closeMenu(event, () => window.launcherApi.openGameFolder(config.gamePath))}>{t('menu_open_game_folder')}</span>
+          <span onClick={(event) => closeMenu(event, () => window.launcherApi.openGameFolder(config.gamePath, environment))}>
+            {t('menu_open_game_folder')}
+          </span>
           <span data-disabled>{t('menu_choose_save_location')}</span>
           <span onClick={(event) => closeMenu(event, () => dialogsRef.current?.openDialog('uninstall', true))}>{t('menu_uninstall')}</span>
         </div>

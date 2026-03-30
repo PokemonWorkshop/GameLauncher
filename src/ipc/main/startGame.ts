@@ -4,7 +4,7 @@ import log from 'electron-log';
 import fs from 'fs';
 import path from 'path';
 
-import { GameConfiguration } from '@src/types';
+import { GameConfiguration, GameEnvironment } from '@src/types';
 import { BINARIES_PATH } from './binariesUpdate';
 
 let childProcess: ChildProcessWithoutNullStreams | undefined = undefined;
@@ -22,24 +22,26 @@ const getSpawnArgs = (rubyPath: string): [string, string[]] => {
   }
 };
 
-export const startGame = (gamePath: GameConfiguration['gamePath'], event: IpcMainEvent) => {
+export const startGame = (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment, event: IpcMainEvent) => {
+  const pathInstall = gamePath.replace('<channel>', environment);
+
   if (childProcess && childProcess.exitCode === null) {
     return event.sender.send('start-game/result', false);
   }
 
-  if (!fs.existsSync(path.join(gamePath, 'Game.yarb'))) {
-    log.error('File not found: ', path.join(gamePath, 'Game.yarb'));
+  if (!fs.existsSync(path.join(pathInstall, 'Game.yarb'))) {
+    log.error('File not found: ', path.join(pathInstall, 'Game.yarb'));
     return event.sender.send('start-game/result', false);
   }
 
-  let rubyPath = path.join(gamePath, BINARIES_PATH);
+  let rubyPath = path.join(pathInstall, BINARIES_PATH);
   if (!fs.existsSync(rubyPath)) {
     log.info('Binaries directory not found:', rubyPath);
-    rubyPath = path.join(gamePath, '../..');
+    rubyPath = path.join(pathInstall, '../..');
     log.info('Fallback to old binaries directory:', rubyPath);
   }
 
-  childProcess = spawn(...getSpawnArgs(rubyPath), { cwd: gamePath, detached: true, env: { ...process.env, GAMEDEPS: rubyPath } });
+  childProcess = spawn(...getSpawnArgs(rubyPath), { cwd: pathInstall, detached: true, env: { ...process.env, GAMEDEPS: rubyPath } });
   childProcess.stderr.on('data', (chunk) => log.error(chunk.toString()));
   childProcess.stdout.on('data', (chunk) => {
     const arrData = (stdOutRemaining + chunk.toString()).split('\n');

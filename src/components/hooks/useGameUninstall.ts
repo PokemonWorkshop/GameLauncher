@@ -1,3 +1,4 @@
+import { useEnvironment } from '@components/context/EnvironmentContext';
 import { GameConfiguration, GameUninstallProgress, LauncherError } from '@src/types';
 import { useEffect, useState } from 'react';
 
@@ -7,6 +8,7 @@ export const useGameUninstall = (shouldUninstall: boolean, onGameUninstallDone: 
   const [state, setState] = useState<GameUninstallStateObject>({ state: 'initializing' });
   const [hasError, setHasError] = useState<LauncherError>({ isError: false });
   const [progress, setProgress] = useState<Omit<GameUninstallProgress, 'state'>>({ progress: 0 });
+  const { environment } = useEnvironment();
   const gameUninstall = window.launcherApi.gameUninstall;
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export const useGameUninstall = (shouldUninstall: boolean, onGameUninstallDone: 
         setState({ state: 'uninstalling' });
         break;
       case 'uninstalling':
-        gameUninstall.gameUninstall(configuration.installPath);
+        gameUninstall.gameUninstall({ gamePath: configuration.gamePath, environment });
         gameUninstall.onGameUninstallDone(() => setState({ state: 'done' }));
         gameUninstall.onGameUninstallProgress((progress) => setProgress({ progress }));
         gameUninstall.onGameUninstallFailure((errorMessage) => {

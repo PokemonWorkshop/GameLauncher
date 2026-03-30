@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
-import { GameConfiguration, LauncherError } from '@src/types';
+import { GameConfiguration, LauncherError, ValidChannels } from '@src/types';
 
 import { voidCleanup } from './voidCleanup';
+import { useEnvironment } from '@components/context/EnvironmentContext';
 
 export const useDownloadGameUpdate = (
   shouldDownload: boolean,
@@ -14,6 +15,7 @@ export const useDownloadGameUpdate = (
   const [overallProgress, setOverallProgress] = useState(0);
   const [hasError, setHasError] = useState<LauncherError>({ isError: false });
   const requestFile = window.launcherApi.requestFile;
+  const { environment } = useEnvironment();
 
   const resetState = () => {
     setDownloadProgress(0);
@@ -28,7 +30,11 @@ export const useDownloadGameUpdate = (
     const fileToDownload = filesToDownload[overallProgress];
 
     const asyncHandler = async () => {
-      const realFilename = `${configuration.gamePath}${fileToDownload.startsWith('/') ? fileToDownload : `/${fileToDownload}`}`;
+      const channel = environment || 'stable';
+      window.console.log(environment);
+      const resolvedGamePath = configuration.gamePath.replace('<channel>', channel);
+
+      const realFilename = `${resolvedGamePath}${fileToDownload.startsWith('/') ? fileToDownload : `/${fileToDownload}`}`;
       const estimatedFileSize = await window.launcherApi.estimateFileSize(realFilename);
       window.launcherApi.log.info(realFilename, estimatedFileSize);
 
@@ -65,7 +71,12 @@ export const useDownloadGameUpdate = (
         }
       });
 
-      requestFile.requestFile(new URL(`game/${fileToDownload}?v=${configuration.gameVersion}`, configuration.gameUrl).href);
+      requestFile.requestFile(
+        new URL(
+          `game/${fileToDownload}?v=${configuration.gameName ?? 0}`,
+          configuration.channels[environment as ValidChannels<typeof configuration>]?.gameUrl,
+        ).href,
+      );
     };
 
     asyncHandler();
