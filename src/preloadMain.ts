@@ -17,15 +17,15 @@ import { gameUninstall } from '@ipcMain/gameUninstall';
 
 export const preloadIpcMain = () => {
   ipcMain.on('test-message', (_, message) => log.info(message));
-  ipcMain.handle('load-config', async () => {
-    const config = await loadConfig();
+  ipcMain.handle('load-config', async (_, environment) => {
+    const config = await loadConfig(environment);
     return config;
   });
   ipcMain.on('request-file', (event, url) => requestFile(new URL(url), event));
   ipcMain.handle('request-file/state-report', () => getRequestStateReport());
   ipcMain.handle('request-file/data', (_, encoding) => getRequestData(encoding));
   ipcMain.handle('check-files', (event, projectPath, filesToCheck, filesToTest) => checkFiles(projectPath, filesToCheck, filesToTest, event));
-  ipcMain.on('start-game', (event, gamePath) => startGame(gamePath, event));
+  ipcMain.on('start-game', (event, gamePath, environment) => startGame(gamePath, environment, event));
   ipcMain.on('external-window', (_, arg) => shell.openExternal(arg));
   ipcMain.handle('save-file', (_, path, data) => saveFile(path, data));
   ipcMain.handle('estimate-file-size', (_, path) => estimateFileSize(path));
@@ -37,30 +37,30 @@ export const preloadIpcMain = () => {
   });
   ipcMain.handle('version', () => app.getVersion());
   ipcMain.handle('quit-and-install', () => autoUpdater.quitAndInstall());
-  ipcMain.handle('check-game-install', async (_, installPath) => {
-    const checkResult = await checkGameInstall(installPath);
+  ipcMain.handle('check-game-install', async (_, gamePath, environment) => {
+    const checkResult = await checkGameInstall(gamePath, environment);
     return checkResult;
   });
-  ipcMain.handle('init-game-install', async (_, installPath) => initGameInstall(installPath));
-  ipcMain.handle('clean-game-install', async (_, installPath, removeGame) => cleanGameInstall(installPath, removeGame));
-  ipcMain.on('extract-game', (event, installPath) => extractGame(event, installPath));
-  ipcMain.on('request-game-file', (event, { installUrl, metadataUrl, installPath }) =>
-    requestGameFile(event, { installUrl, metadataUrl, installPath }),
+  ipcMain.handle('init-game-install', async (_, gamePath, environment) => initGameInstall(gamePath, environment));
+  ipcMain.handle('clean-game-install', async (_, gamePath, environment, removeGame) => cleanGameInstall(gamePath, environment, removeGame));
+  ipcMain.on('extract-game', (event, gamePath, environment) => extractGame(event, gamePath, environment));
+  ipcMain.on('request-game-file', (event, { gamePath, environment, installUrl, metadataUrl }) =>
+    requestGameFile(event, { gamePath, environment, installUrl, metadataUrl }),
   );
-  ipcMain.handle('check-need-to-update-binaries', async (_, gamePath) => {
-    const checkResult = await checkNeedToUpdateBinaries(gamePath);
+  ipcMain.handle('check-need-to-update-binaries', async (_, gamePath, environment) => {
+    const checkResult = await checkNeedToUpdateBinaries(gamePath, environment);
     return checkResult;
   });
-  ipcMain.handle('init-binaries-update', async (_, installPath, gamePath) => initBinariesUpdate(installPath, gamePath));
-  ipcMain.handle('clean-binaries-update', async (_, installPath, gamePath, removeBinaries) =>
-    cleanBinariesUpdate(installPath, gamePath, removeBinaries),
+  ipcMain.handle('init-binaries-update', async (_, gamePath, environment) => initBinariesUpdate(gamePath, environment));
+  ipcMain.handle('clean-binaries-update', async (_, gamePath, environment, removeBinaries) =>
+    cleanBinariesUpdate(gamePath, environment, removeBinaries),
   );
-  ipcMain.on('request-binaries-file', (event, { binariesUrl, installPath, gamePath }) =>
-    requestBinariesFile(event, { binariesUrl, installPath, gamePath }),
+  ipcMain.on('request-binaries-file', (event, { gamePath, binariesUrl, environment }) =>
+    requestBinariesFile(event, { gamePath, binariesUrl, environment }),
   );
-  ipcMain.on('extract-binaries', (event, installPath, gamePath) => extractBinaries(event, installPath, gamePath));
-  ipcMain.on('open-game-folder', (_, gamePath) => openGameFolder(gamePath));
+  ipcMain.on('extract-binaries', (event, { gamePath, environment }) => extractBinaries(event, { gamePath, environment }));
+  ipcMain.on('open-game-folder', (_, gamePath, environment) => openGameFolder(gamePath, environment));
   ipcMain.on('create-desktop-shortcut', () => createDesktopShortcut());
-  ipcMain.on('game-uninstall', (event, installPath) => gameUninstall(event, installPath));
+  ipcMain.on('game-uninstall', (event, { gamePath, environment }) => gameUninstall(event, { gamePath, environment }));
   ipcMain.once('game-launcher-check-update', () => app.isPackaged && autoUpdater.checkForUpdates());
 };

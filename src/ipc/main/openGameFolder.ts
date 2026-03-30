@@ -1,10 +1,10 @@
-import { GameConfiguration } from '@src/types';
+import { GameConfiguration, GameEnvironment } from '@src/types';
 import { shell } from 'electron';
 import log from 'electron-log';
 import fs from 'fs';
 
-export const openGameFolder = async (gamePath: GameConfiguration['gamePath']) => {
-  const path = gamePath.replaceAll('\\', '/');
+export const openGameFolder = async (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => {
+  const path = gamePath.replaceAll('\\', '/').replace('<channel>', environment);
   log.info('open-game-folder', path);
   if (!fs.existsSync(path)) {
     log.warn(`Cannot open the game folder: ${path} not found`);

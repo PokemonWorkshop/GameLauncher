@@ -1,0 +1,19 @@
+{
+  "gamePath": "%appdata%/Foret Eternelle/launcher_release/games/ForetEternelle",
+  "gameVersion": "0.0.1",
+  "gameUrl": "https://www.pokemonforeteternelle.com/laforceestpuissanteenlui/yugioh/",
+  "installPath": "%appdata%/Foret Eternelle",
+  "installUrl": "https://www.pokemonforeteternelle.com/fe_install/first_install/foret-eternelle-first-installation.zip",
+  "metadataUrl": "https://www.pokemonforeteternelle.com/fe_install/first_install/metadata.json",
+  "binariesUrl": "https://github.com/PokemonWorkshop/PokemonSDKBinaries/releases/download/",
+  "socialLinks": {
+    "website": "https://www.pokemonforeteternelle.com",
+    "discord": "https://discord.gg/2DwCVpa",
+    "instagram": "https://www.instagram.com/foreteternellefangame/",
+    "x": "https://x.com/ForetEternelle",
+    "facebook": "https://www.facebook.com/PokemonForetEternelle",
+    "youtube": "https://www.youtube.com/channel/UCxIWIlccTtirjNVX30HsjOg",
+    "tiktok": "",
+    "bluesky": ""
+  }
+}

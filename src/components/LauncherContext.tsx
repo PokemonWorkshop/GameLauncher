@@ -1,6 +1,6 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 
-import { BinariesUpdateProgress, GameConfiguration, GameInstallProgress, GameUninstallProgress, LauncherError } from '@src/types';
+import { BinariesUpdateProgress, GameConfiguration, GameEnvironment, GameInstallProgress, GameUninstallProgress, LauncherError } from '@src/types';
 
 import { useDownloadGameUpdate } from './hooks/useDowloadGameUpdate';
 import { useGameConfiguration } from './hooks/useGameConfiguration';
@@ -13,15 +13,19 @@ import { useStartGame } from './hooks/useStartGame';
 import { voidCleanup } from './hooks/voidCleanup';
 import { useBinariesUpdate } from './hooks/useBinariesUpdate';
 import { useGameUninstall } from './hooks/useGameUninstall';
+import { STORAGE_KEY, useEnvironment } from './context/EnvironmentContext';
 
 const defaultConfiguration: GameConfiguration = {
   gamePath: '',
-  gameUrl: '/',
-  gameVersion: '0.0.1',
-  installPath: '',
-  installUrl: '/',
-  metadataUrl: '/',
-  binariesUrl: '/',
+  channels: {
+    stable: {
+      gameUrl: '',
+      gameVersion: '0.0.0',
+      installUrl: '',
+      metadataUrl: '',
+      binariesUrl: '',
+    },
+  },
   socialLinks: {
     website: '',
     discord: '',
@@ -52,6 +56,7 @@ type LauncherContext = {
     | 'editing_options'
     | 'uninstalling';
   configuration: GameConfiguration;
+  environment: GameEnvironment;
   gameInstallProgress: GameInstallProgress;
   binariesUpdateProgress: BinariesUpdateProgress;
   gameUninstallProgress: GameUninstallProgress;
@@ -71,11 +76,13 @@ type LauncherContext = {
   handleInstallClick: () => void;
   handleEditingOptionsClick: (open: boolean) => void;
   handleUninstallClick: () => void;
+  handleEnvironmentClick: (env: GameEnvironment) => void;
 };
 
 const LauncherContextHolder = createContext<LauncherContext>({
   state: 'loading',
   configuration: defaultConfiguration,
+  environment: localStorage.getItem(STORAGE_KEY) || 'stable',
   gameInstallProgress: { state: 'initializing', progress: 0, rate: 0 },
   binariesUpdateProgress: { state: 'checking', progress: 0, rate: 0 },
   gameUninstallProgress: { state: 'initializing', progress: 0 },
@@ -97,6 +104,7 @@ const LauncherContextHolder = createContext<LauncherContext>({
     open;
   },
   handleUninstallClick: voidCleanup,
+  handleEnvironmentClick: voidCleanup,
 });
 
 export const useLauncherContext = () => useContext(LauncherContextHolder);
@@ -137,6 +145,7 @@ const computeState = (
 };
 
 const useLauncherContextService = (): LauncherContext => {
+  const { environment, setEnvironment } = useEnvironment();
   const [flipFlapConfig, setFlipFlapConfig] = useState(false);
   const [shouldCheckInstall, setShouldCheckInstall] = useState(true);
   const [shouldInstall, setShouldInstall] = useState(false);
@@ -180,12 +189,12 @@ const useLauncherContextService = (): LauncherContext => {
   };
 
   const { isLoading, configuration } = useGameConfiguration(flipFlapConfig);
-  const { doneInstallChecking, isGameInstalled, hasGameInstallCheckError } = useGameInstallCheck(
+  const { doneInstallChecking, isGameInstalled, hasGameInstallCheckError, resetGameInstallCheck } = useGameInstallCheck(
     shouldCheckInstall,
     onInstallCheckDone,
     configuration,
   );
-  const { hasGameInstallError, gameInstallProgress } = useGameInstall(shouldInstall, onGameInstallDone, configuration);
+  const { hasGameInstallError, gameInstallProgress, resetGameInstall } = useGameInstall(shouldInstall, onGameInstallDone, configuration);
   const { isValidLicence, doneLicenceChecking, resetLicenceCheck } = useCheckLicence(isGameInstalled, configuration);
   const { updateCheckProgress, filesToDownload, doneChecking, hasGameUpdateCheckError, resetGameUpdateCheck } = useGameUpdateCheck(
     isValidLicence,
@@ -216,6 +225,18 @@ const useLauncherContextService = (): LauncherContext => {
     resetDownloadGameUpdate();
   };
 
+  const changeEnvironment = (env: GameEnvironment) => {
+    setFlipFlapConfig(!flipFlapConfig);
+    resetGameInstallCheck();
+    resetGameInstall();
+    reset();
+    setShouldCheckInstall(true);
+    setShouldInstall(false);
+    setShouldDownload(false);
+    setShouldUpdateBinaries(false);
+    setEnvironment(env);
+  };
+
   return {
     state: computeState(
       isLoading,
@@ -235,6 +256,7 @@ const useLauncherContextService = (): LauncherContext => {
       shouldUninstall,
     ),
     configuration: configuration ?? defaultConfiguration,
+    environment,
     gameInstallProgress,
     binariesUpdateProgress,
     gameUninstallProgress,
@@ -254,6 +276,7 @@ const useLauncherContextService = (): LauncherContext => {
     handleInstallClick: () => setShouldInstall(true),
     handleEditingOptionsClick: (open) => setShouldEditingOptions(open),
     handleUninstallClick: () => setShouldUninstall(true),
+    handleEnvironmentClick: (env) => changeEnvironment(env),
   };
 };
 

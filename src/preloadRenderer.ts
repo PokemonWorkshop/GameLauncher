@@ -11,7 +11,7 @@ import { ILauncherAPI } from './types';
 
 const launcherApi: ILauncherAPI = {
   testMessage: (message) => ipcRenderer.send('test-message', message),
-  loadConfig: () => ipcRenderer.invoke('load-config'),
+  loadConfig: (environment) => ipcRenderer.invoke('load-config', environment),
   estimateFileSize: (path) => ipcRenderer.invoke('estimate-file-size', path),
   checkFiles: (projectPath, filesToCheck, filesToTest) => ipcRenderer.invoke('check-files', projectPath, filesToCheck, filesToTest),
   externalWindow: (link) => ipcRenderer.send('external-window', link),
@@ -22,7 +22,7 @@ const launcherApi: ILauncherAPI = {
   readLicence: (currentConfig) => ipcRenderer.invoke('read-licence', currentConfig),
   version: () => ipcRenderer.invoke('version'),
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
-  openGameFolder: (gamePath) => ipcRenderer.send('open-game-folder', gamePath),
+  openGameFolder: (gamePath, environment) => ipcRenderer.send('open-game-folder', gamePath, environment),
   createDesktopShortcut: () => ipcRenderer.send('create-desktop-shortcut'),
   checkUpdate: () => ipcRenderer.send('game-launcher-check-update'),
   requestUpdateDownloaded: {

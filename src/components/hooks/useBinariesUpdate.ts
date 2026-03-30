@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { GameConfiguration, BinariesUpdateProgress, LauncherError } from '@src/types';
+import { useEnvironment } from '@components/context/EnvironmentContext';
 
 type BinariesUpdateStateObject =
   | { state: 'checking' }
@@ -15,6 +16,7 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
   const [hasError, setHasError] = useState<LauncherError>({ isError: false });
   const [progress, setProgress] = useState<Omit<BinariesUpdateProgress, 'state'>>({ progress: 0, rate: 0 });
   const binariesUpdate = window.launcherApi.binariesUpdate;
+  const { environment } = useEnvironment();
 
   useEffect(() => {
     if (!shouldUpdateBinaries || !configuration) return;
@@ -24,7 +26,7 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
         setHasError({ isError: false });
         // fake progress
         setProgress({ progress: 10 + Math.floor(Math.random() * 15), rate: 0 });
-        binariesUpdate.checkNeedToUpdateBinaries(configuration.gamePath).then((checkResult) => {
+        binariesUpdate.checkNeedToUpdateBinaries(configuration.gamePath, environment).then((checkResult) => {
           if (checkResult.error.isError) {
             setHasError(checkResult.error);
             setState({ state: 'cleaning', isError: true });
@@ -37,7 +39,7 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
         break;
       case 'initializing':
         setProgress({ progress: 0, rate: 0 });
-        binariesUpdate.initBinariesUpdate(configuration.installPath, configuration.gamePath).then((error) => {
+        binariesUpdate.initBinariesUpdate(configuration.gamePath, environment).then((error) => {
           if (error.isError) {
             setHasError(error);
             setState({ state: 'cleaning', isError: true });
@@ -48,9 +50,9 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
         break;
       case 'downloading':
         binariesUpdate.requestBinariesFile({
-          binariesUrl: configuration.binariesUrl,
-          installPath: configuration.installPath,
           gamePath: configuration.gamePath,
+          binariesUrl: configuration.channels[environment].binariesUrl,
+          environment,
         });
         binariesUpdate.onRequestBinariesFileDone(() => setState({ state: 'extracting' }));
         binariesUpdate.onRequestBinariesFileProgress((progress, rate) => setProgress({ progress, rate }));
@@ -60,7 +62,7 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
         });
         break;
       case 'extracting':
-        binariesUpdate.extractBinaries(configuration.installPath, configuration.gamePath);
+        binariesUpdate.extractBinaries({ gamePath: configuration.gamePath, environment });
         binariesUpdate.onExtractBinariesDone(() => setState({ state: 'cleaning', isError: false }));
         binariesUpdate.onExtractBinariesProgress((progress) => setProgress({ progress, rate: 0 }));
         binariesUpdate.onExtractBinariesFailure((errorMessage) => {
@@ -69,7 +71,7 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
         });
         break;
       case 'cleaning':
-        binariesUpdate.cleanBinariesUpdate(configuration.installPath, configuration.gamePath, state.isError).then((error) => {
+        binariesUpdate.cleanBinariesUpdate(configuration.gamePath, environment, state.isError).then((error) => {
           if (error.isError) setHasError(error);
           setState({ state: 'done' });
         });

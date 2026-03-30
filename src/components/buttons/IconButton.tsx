@@ -19,7 +19,7 @@ type CloseButtonProps = {
 
 export const CloseButton = ({ disabled, onClick }: CloseButtonProps) => {
   return (
-    <IconButton onClick={onClick} disabled={disabled}>
+    <IconButton tabIndex={0} onClick={onClick} disabled={disabled}>
       <CloseIconSvg />
     </IconButton>
   );
@@ -32,7 +32,7 @@ type SettingsButtonProps = {
 
 export const SettingsButton = ({ disabled, onClick }: SettingsButtonProps) => {
   return (
-    <IconButton onClick={onClick} disabled={disabled}>
+    <IconButton tabIndex={0} onClick={onClick} disabled={disabled}>
       <SettingsIconSvg />
     </IconButton>
   );

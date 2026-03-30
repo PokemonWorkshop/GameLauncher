@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import { GameConfiguration, LauncherError } from '@src/types';
 
 import { voidCleanup } from './voidCleanup';
+import { useEnvironment } from '@components/context/EnvironmentContext';
 
 export const useStartGame = (shouldStart: boolean, onStartDone: () => void, configuration?: GameConfiguration) => {
   const [startProgress, setStartProgress] = useState(0);
   const [hasError, setHasError] = useState<LauncherError>({ isError: false });
   const [gameIsLoading, setGameIsLoading] = useState(false);
+  const { environment } = useEnvironment();
 
   useEffect(() => {
     if (!shouldStart || !configuration) return voidCleanup;
@@ -31,7 +33,7 @@ export const useStartGame = (shouldStart: boolean, onStartDone: () => void, conf
             onStartDone();
           }
         });
-        window.launcherApi.startGame.startGame(configuration.gamePath);
+        window.launcherApi.startGame.startGame(configuration.gamePath, environment);
       }
     } catch (e) {
       if (e instanceof Error) {

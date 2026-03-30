@@ -1,19 +1,20 @@
 import fs from 'fs';
-import { GameConfiguration } from '@src/types';
+import { GameConfiguration, GameEnvironment } from '@src/types';
 import { IpcMainEvent } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 
-export const gameUninstall = async (event: IpcMainEvent, installPath: GameConfiguration['installPath']) => {
-  log.info('game-uninstall', { installPath });
+export const gameUninstall = async (event: IpcMainEvent, payload: { gamePath: GameConfiguration['gamePath']; environment: GameEnvironment }) => {
+  log.info('game-uninstall', payload);
 
-  if (!fs.existsSync(installPath)) {
-    log.error('game-uninstall/failure', `${installPath} not found`);
+  const gamePathFixed = payload.gamePath.replace('<channel>', payload.environment);
+  if (!fs.existsSync(gamePathFixed)) {
+    log.error('game-uninstall/failure', `${gamePathFixed} not found`);
     event.sender.send('game-uninstall/failure', `An error occurred while uninstalling`);
   }
 
   try {
-    const files = await fs.promises.readdir(installPath, { recursive: true });
+    const files = await fs.promises.readdir(gamePathFixed, { recursive: true });
     const totalFiles = files.length;
     let deletedCount = 0;
     log.info('game-uninstall', `${totalFiles} files to delete`);
@@ -22,7 +23,7 @@ export const gameUninstall = async (event: IpcMainEvent, installPath: GameConfig
     await files.reduce(async (lastPromise, file) => {
       await lastPromise;
 
-      const filePath = path.join(installPath, file);
+      const filePath = path.join(gamePathFixed, file);
       const isDirectory = (await fs.promises.lstat(filePath)).isDirectory();
       if (!isDirectory) {
         await fs.promises.unlink(filePath);
@@ -32,7 +33,7 @@ export const gameUninstall = async (event: IpcMainEvent, installPath: GameConfig
     }, Promise.resolve());
 
     // Delete all folders
-    await fs.promises.rm(installPath, { recursive: true, force: true });
+    await fs.promises.rm(gamePathFixed, { recursive: true, force: true });
   } catch (error) {
     log.error('game-uninstall/failure', error);
     event.sender.send('game-uninstall/failure', `${error instanceof Error ? error.message : 'An error occurred while uninstalling'}`);

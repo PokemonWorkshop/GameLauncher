@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { GameConfiguration, LauncherError } from '@src/types';
+import type { GameConfiguration, GameEnvironment, LauncherError } from '@src/types';
 import { useTranslation } from 'react-i18next';
 import { voidCleanup } from './voidCleanup';
+import { useEnvironment } from '@components/context/EnvironmentContext';
 
 export const useGameUpdateCheck = (
   isValidLicence: boolean,
@@ -14,6 +15,7 @@ export const useGameUpdateCheck = (
   const [hasGameUpdateCheckError, setHasGameUpdateCheckError] = useState<LauncherError>({ isError: false });
   const { t } = useTranslation();
   const requestFile = window.launcherApi.requestFile;
+  const { environment } = useEnvironment();
 
   const resetState = () => {
     setUpdateCheckProgress(0);
@@ -55,7 +57,9 @@ export const useGameUpdateCheck = (
 
     requestFile.onRequestProgress((progress) => setUpdateCheckProgress(progress > 1 ? 100 : progress * 100));
 
-    requestFile.requestFile(new URL(`versions/${configuration.gameVersion}.json?v=${+new Date()}`, configuration.gameUrl).href);
+    const gameVersion = configuration.channels[environment as GameEnvironment].gameVersion;
+    const gameUrl = configuration.channels[environment as GameEnvironment].gameUrl;
+    requestFile.requestFile(new URL(`versions/${gameVersion}.json?v=${+new Date()}`, gameUrl).href);
 
     return requestFile.removeEventListeners;
   }, [isValidLicence]);
