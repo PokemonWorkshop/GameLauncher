@@ -41,9 +41,21 @@ export const Home = () => {
     handleInstallClick,
     handleEditingOptionsClick,
     handleUninstallClick,
+    handleEnvironmentClick,
   } = useLauncherContext();
   const dialogsRef = useDialogsRef<DialogKeys>();
   const { t } = useTranslation();
+
+  function EnvironmentSelector() {
+    return (
+      <div>
+        <h3>Environnement actuel : {environment}</h3>
+
+        <button onClick={() => handleEnvironmentClick('stable')}>Stable</button>
+        <button onClick={() => handleEnvironmentClick('beta')}>Bêta</button>
+      </div>
+    );
+  }
 
   return (
     <AppContainer>
