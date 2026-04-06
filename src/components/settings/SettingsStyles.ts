@@ -138,10 +138,7 @@ export const CloseButton = styled.button`
   background: transparent;
   border: none;
   color: ${({ theme }) => theme.color.text.subtle};
-  font-size: 16px;
-  line-height: 1;
-  padding: 4px 6px;
-  border-radius: 4px;
+
   cursor: pointer;
   z-index: 1;
   transition:
@@ -150,6 +147,5 @@ export const CloseButton = styled.button`
 
   &:hover {
     color: ${({ theme }) => theme.color.text.default};
-    background: ${({ theme }) => theme.color.background.subtle.hover};
   }
 `;

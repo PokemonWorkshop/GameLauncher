@@ -1,6 +1,7 @@
 import { OverlayHandlingClose, useOverlayHandlingClose } from '@hooks/useHandleCloseOverlay';
 import React, { forwardRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import CloseIconAppSvg from '@assets/close_icon_app.svg';
 import { useLauncherContext } from '@components/LauncherContext';
 import { CloseButton, Content, SettingsBox, Sidebar, SidebarItem } from './SettingsStyles';
 import { GeneralTab } from './tabs/GeneralTab';
@@ -23,7 +24,7 @@ export const SettingsDialog = forwardRef<OverlayHandlingClose, SettingsDialogPro
   return (
     <SettingsBox>
       <CloseButton onClick={closeDialog} aria-label="Close settings">
-        ✕
+        <CloseIconAppSvg />
       </CloseButton>
       <Sidebar>
         <h4>{t('settings_params')}</h4>
