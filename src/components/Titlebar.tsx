@@ -143,7 +143,7 @@ export const Titlebar = () => {
     <TitlebarContainer isOpen={isOpen}>
       <div>
         <span className="title">Game Launcher</span>
-        <a className="subtitle"> • {environment}</a>
+        <span className="subtitle"> • {environment}</span>
       </div>
       <div className="action-container">
         <div className="menu-icon" onClick={onClick}>
