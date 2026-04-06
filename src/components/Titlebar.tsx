@@ -22,6 +22,7 @@ const TitlebarContainer = styled.div<TitlebarContainerProps>`
   color: ${({ theme }) => theme.color.text.subtle};
   z-index: 9999;
   -webkit-app-region: drag;
+  cursor: pointer;
 
   .title {
     ${({ theme }) => theme.fonts.label.small}
@@ -32,8 +33,6 @@ const TitlebarContainer = styled.div<TitlebarContainerProps>`
   .subtitle {
     ${({ theme }) => theme.fonts.label.small};
     color: ${({ theme }) => theme.color.text.disabled};
-    cursor: pointer;
-    -webkit-app-region: no-drag;
   }
 
   .action-container {
@@ -144,10 +143,7 @@ export const Titlebar = () => {
     <TitlebarContainer isOpen={isOpen}>
       <div>
         <span className="title">Game Launcher</span>
-        <a onClick={() => window.launcherApi.externalWindow('https://www.google.com/')} target="_blank" className="subtitle">
-          {' '}
-          • {environment}
-        </a>
+        <span className="subtitle"> • {environment}</span>
       </div>
       <div className="action-container">
         <div className="menu-icon" onClick={onClick}>
