@@ -130,3 +130,22 @@ export const ChevronWrapper = styled.span`
     height: 20px;
   }
 `;
+
+export const CloseButton = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: ${({ theme }) => theme.color.text.subtle};
+
+  cursor: pointer;
+  z-index: 1;
+  transition:
+    color 0.1s,
+    background 0.1s;
+
+  &:hover {
+    color: ${({ theme }) => theme.color.text.default};
+  }
+`;
