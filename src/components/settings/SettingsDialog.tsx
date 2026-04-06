@@ -2,7 +2,7 @@ import { OverlayHandlingClose, useOverlayHandlingClose } from '@hooks/useHandleC
 import React, { forwardRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLauncherContext } from '@components/LauncherContext';
-import { Content, SettingsBox, Sidebar, SidebarItem } from './SettingsStyles';
+import { CloseButton, Content, SettingsBox, Sidebar, SidebarItem } from './SettingsStyles';
 import { GeneralTab } from './tabs/GeneralTab';
 import { EnvironmentTab } from './tabs/EnvironmentTab';
 import { AboutTab } from './tabs/AboutTab';
@@ -13,7 +13,7 @@ type SettingsDialogProps = {
   closeDialog: () => void;
 };
 
-export const SettingsDialog = forwardRef<OverlayHandlingClose, SettingsDialogProps>((_, ref) => {
+export const SettingsDialog = forwardRef<OverlayHandlingClose, SettingsDialogProps>(({ closeDialog }, ref) => {
   const { t } = useTranslation();
   const { handleEnvironmentClick } = useLauncherContext();
   const [activeTab, setActiveTab] = useState<Tab>('general');
@@ -22,6 +22,9 @@ export const SettingsDialog = forwardRef<OverlayHandlingClose, SettingsDialogPro
 
   return (
     <SettingsBox>
+      <CloseButton onClick={closeDialog} aria-label="Close settings">
+        ✕
+      </CloseButton>
       <Sidebar>
         <h4>{t('settings_params')}</h4>
         <SidebarItem active={activeTab === 'general'} onClick={() => setActiveTab('general')}>
