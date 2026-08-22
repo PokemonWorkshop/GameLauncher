@@ -238,6 +238,11 @@ const useLauncherContextService = (): LauncherContext => {
     setEnvironment(env);
   };
 
+  const handleDownloadClick = () => {
+    resetDownloadGameUpdate();
+    setShouldDownload(true);
+  };
+
   return {
     state: computeState(
       isLoading,
@@ -273,10 +278,7 @@ const useLauncherContextService = (): LauncherContext => {
     hasError,
     hasStartError,
     hasPlayError,
-    handleDownloadClick: () => {
-      resetDownloadGameUpdate();
-      setShouldDownload(true);
-    },
+    handleDownloadClick,
     handleStartClick: () => setShouldStart(true),
     handleInstallClick: () => setShouldInstall(true),
     handleEditingOptionsClick: (open) => setShouldEditingOptions(open),
