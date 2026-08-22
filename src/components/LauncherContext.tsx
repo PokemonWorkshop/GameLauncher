@@ -40,21 +40,21 @@ const defaultConfiguration: GameConfiguration = {
 
 type LauncherContext = {
   state:
-    | 'loading'
-    | 'install_checking'
-    | 'install_waiting'
-    | 'installing'
-    | 'licence_checking'
-    | 'bad_licence'
-    | 'checking'
-    | 'update_waiting'
-    | 'updating'
-    | 'binaries_updating'
-    | 'play_waiting'
-    | 'starting'
-    | 'playing'
-    | 'editing_options'
-    | 'uninstalling';
+  | 'loading'
+  | 'install_checking'
+  | 'install_waiting'
+  | 'installing'
+  | 'licence_checking'
+  | 'bad_licence'
+  | 'checking'
+  | 'update_waiting'
+  | 'updating'
+  | 'binaries_updating'
+  | 'play_waiting'
+  | 'starting'
+  | 'playing'
+  | 'editing_options'
+  | 'uninstalling';
   configuration: GameConfiguration;
   environment: GameEnvironment;
   gameInstallProgress: GameInstallProgress;
@@ -125,6 +125,7 @@ const computeState = (
   shouldInstall: boolean,
   shouldEditingOptions: boolean,
   shouldUninstall: boolean,
+  hasError: boolean,
 ): LauncherContext['state'] => {
   if (isLoading) return 'loading';
   if (!doneInstallChecking) return 'install_checking';
@@ -135,7 +136,7 @@ const computeState = (
   if (!doneChecking) return 'checking';
   if (shouldDownload) return 'updating';
   if (shouldEditingOptions) return 'editing_options';
-  if (filesToDownload.length !== 0 && !downloadDone) return 'update_waiting';
+  if (filesToDownload.length !== 0 && (!downloadDone || hasError)) return 'update_waiting';
   if (shouldUpdateBinaries) return 'binaries_updating';
   if (shouldStart) return 'starting';
   if (isPlaying) return 'playing';
@@ -161,9 +162,9 @@ const useLauncherContextService = (): LauncherContext => {
   const onGameUpdateDoneChecking = (needToUpdateGame: boolean) => {
     setShouldUpdateBinaries(!needToUpdateGame);
   };
-  const onDownloadDone = () => {
+  const onDownloadDone = (success: boolean) => {
     setShouldDownload(false);
-    setShouldUpdateBinaries(true);
+    if (success) setShouldUpdateBinaries(true);
   };
   const onBinariesUpdateDone = () => {
     setShouldUpdateBinaries(false);
@@ -237,6 +238,11 @@ const useLauncherContextService = (): LauncherContext => {
     setEnvironment(env);
   };
 
+  const handleDownloadClick = () => {
+    resetDownloadGameUpdate();
+    setShouldDownload(true);
+  };
+
   return {
     state: computeState(
       isLoading,
@@ -254,6 +260,7 @@ const useLauncherContextService = (): LauncherContext => {
       shouldInstall,
       shouldEditingOptions,
       shouldUninstall,
+      hasError.isError,
     ),
     configuration: configuration ?? defaultConfiguration,
     environment,
@@ -271,7 +278,7 @@ const useLauncherContextService = (): LauncherContext => {
     hasError,
     hasStartError,
     hasPlayError,
-    handleDownloadClick: () => setShouldDownload(true),
+    handleDownloadClick,
     handleStartClick: () => setShouldStart(true),
     handleInstallClick: () => setShouldInstall(true),
     handleEditingOptionsClick: (open) => setShouldEditingOptions(open),

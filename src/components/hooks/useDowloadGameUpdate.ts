@@ -8,7 +8,7 @@ import { useEnvironment } from '@components/context/EnvironmentContext';
 export const useDownloadGameUpdate = (
   shouldDownload: boolean,
   filesToDownload: string[],
-  onDownloadDone: () => void,
+  onDownloadDone: (success: boolean) => void,
   configuration?: GameConfiguration,
 ) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -48,17 +48,20 @@ export const useDownloadGameUpdate = (
             setOverallProgress(overallProgress + 1);
             setDownloadProgress((overallProgress + 1) / filesToDownload.length * 100);
 
-            if (overallProgress === filesToDownload.length - 1) onDownloadDone();
+            if (overallProgress === filesToDownload.length - 1) onDownloadDone(true);
           } catch (e) {
             if (e instanceof Error) {
               window.launcherApi.log.error(e);
               setHasError({ isError: true, message: `(${e.message})` });
+            } else {
+              setHasError({ isError: true });
             }
-            setHasError({ isError: true });
+            onDownloadDone(false);
           }
         } else {
           const message = state.status.message ? `(Code: ${state.status.code}: ${state.status.message})` : `(Code: ${state.status.code})`;
           setHasError({ isError: true, message });
+          onDownloadDone(false);
         }
       });
 
