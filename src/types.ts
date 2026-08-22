@@ -2,7 +2,7 @@ import { ipcRenderer } from 'electron';
 
 import type { LogRendererType } from '@ipcRenderer/logRenderer';
 
-type ValidChannels<C extends GameConfiguration> = keyof C['channels'];
+export type ValidChannels<C extends GameConfiguration> = keyof C['channels'];
 export type GameEnvironment = ValidChannels<GameConfiguration>;
 
 export type GameChannelConfiguration = {
