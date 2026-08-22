@@ -46,7 +46,7 @@ export const useDownloadGameUpdate = (
             await window.launcherApi.saveFile(realFilename, data);
 
             setOverallProgress(overallProgress + 1);
-            setDownloadProgress(0);
+            setDownloadProgress((overallProgress + 1) / filesToDownload.length * 100);
 
             if (overallProgress === filesToDownload.length - 1) onDownloadDone();
           } catch (e) {
@@ -59,15 +59,6 @@ export const useDownloadGameUpdate = (
         } else {
           const message = state.status.message ? `(Code: ${state.status.code}: ${state.status.message})` : `(Code: ${state.status.code})`;
           setHasError({ isError: true, message });
-        }
-      });
-
-      requestFile.onRequestProgress((progress) => {
-        if (progress > 1) {
-          const progressWithEstimatedFileSize = (progress / estimatedFileSize) * 100;
-          setDownloadProgress(progressWithEstimatedFileSize > 100 ? 100 : progressWithEstimatedFileSize);
-        } else {
-          setDownloadProgress(progress * 100);
         }
       });
 
