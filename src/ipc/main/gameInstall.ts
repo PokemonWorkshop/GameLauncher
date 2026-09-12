@@ -1,10 +1,8 @@
 import axios from 'axios';
-import crypto from 'crypto';
 import { IpcMainEvent } from 'electron';
 import log from 'electron-log';
 import extract from 'extract-zip';
 import fs from 'fs';
-import fsPromise from 'fs/promises';
 import path from 'path';
 import { ZipFile } from 'yauzl';
 
@@ -13,11 +11,27 @@ import {
   GameChannelConfiguration,
   GameConfiguration,
   GameEnvironment,
-  GameInstallMetadata,
   LauncherError,
 } from '@src/types';
 
 const GAME_PROJECT_PATH = '.temp/game.zip';
+const MANIFEST_PATH = '.launcher/installed-files.json';
+
+const getInstalledFiles = (directory: string, relativePath = ''): string[] => {
+  const files: string[] = [];
+  for (const entry of fs.readdirSync(path.join(directory, relativePath), { withFileTypes: true })) {
+    const entryPath = path.join(relativePath, entry.name);
+    if (entry.isDirectory()) files.push(...getInstalledFiles(directory, entryPath));
+    else if (entry.isFile()) files.push(entryPath.replaceAll('\\', '/'));
+  }
+  return files;
+};
+
+const writeInstallManifest = async (installPath: string, channel: GameChannelConfiguration) => {
+  const files = getInstalledFiles(installPath).filter((file) => !file.startsWith('.temp/') && !file.startsWith('.launcher/'));
+  fs.mkdirSync(path.join(installPath, '.launcher'), { recursive: true });
+  fs.writeFileSync(path.join(installPath, MANIFEST_PATH), JSON.stringify({ version: channel.installVersion || '', files }, null, 2));
+};
 
 export const checkGameInstall = async (
   gamePath: GameConfiguration['gamePath'],
@@ -26,7 +40,7 @@ export const checkGameInstall = async (
   log.info('check-game-install', { gamePath, environment });
   const pathInstall = gamePath.replace('<channel>', environment);
   try {
-    // if the folder .temp exists, we can supposed that the install have been a problem or interrupted, so the install folder is deleted
+    // if the folder .temp exists, we can suppose that the install have encountered a problem or been interrupted, so the install folder is deleted
     const result = fs.existsSync(pathInstall) && !fs.existsSync(path.join(pathInstall, '.temp'));
     if (!result && fs.existsSync(path.join(pathInstall, '.temp'))) fs.rmSync(pathInstall, { recursive: true });
     return {
@@ -87,9 +101,12 @@ export const cleanGameInstall = async (
   }
 };
 
-export const extractGame = async (event: IpcMainEvent, gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => {
-  log.info('extract-game', { gamePath, environment });
-  const installPath = gamePath.replace('<channel>', environment);
+export const extractGame = async (
+  event: IpcMainEvent,
+  payload: { gamePath: GameConfiguration['gamePath']; environment: GameEnvironment; channel: GameChannelConfiguration },
+) => {
+  log.info('extract-game', { gamePath: payload.gamePath, environment: payload.environment });
+  const installPath = payload.gamePath.replace('<channel>', payload.environment);
   const countEntry = { value: 1 };
 
   try {
@@ -101,23 +118,12 @@ export const extractGame = async (event: IpcMainEvent, gamePath: GameConfigurati
         countEntry.value++;
       },
     });
+    await writeInstallManifest(installPath, payload.channel);
     return event.sender.send('extract-game/done');
   } catch (error) {
     log.error('extract-game/failure', error);
     event.sender.send('extract-game/failure', `${error instanceof Error ? error.message : 'An error occurred while extracting'}`);
   }
-};
-
-const checkGameFile = async (installPath: GameConfiguration['gamePath'], environment: GameEnvironment, hash: string) => {
-  const pathInstall = installPath.replace('<channel>', environment);
-  const filename = path.join(pathInstall, '.temp/game.zip');
-  if (!fs.existsSync(filename)) return false;
-
-  const data = await fsPromise.readFile(filename);
-  const hashSum = crypto.createHash('sha256');
-  hashSum.update(data);
-
-  return hash.toUpperCase() === hashSum.digest('hex').toUpperCase();
 };
 
 export const requestGameFile = (
@@ -126,44 +132,41 @@ export const requestGameFile = (
     gamePath: GameConfiguration['gamePath'];
     environment: GameEnvironment;
     installUrl: GameChannelConfiguration['installUrl'];
-    metadataUrl: GameChannelConfiguration['metadataUrl'];
   },
 ) => {
   log.info('request-game-file');
 
-  try {
-    // Récupère les métadonnées depuis l'URL fournie
-    axios.get(payload.metadataUrl).then((response) => {
-      const metadata: GameInstallMetadata = response.data;
-
-      // Télécharge le fichier en stream
-      axios
-        .get(payload.installUrl, {
-          responseType: 'stream',
-          onDownloadProgress({ rate, loaded }) {
-            const progress = loaded / metadata.length;
-            event.sender.send('request-game-file/progress', {
-              progress: progress * 100,
-              rate: rate || 0,
-            });
-          },
-        })
-        .then((response) => {
-          const pathInstallResolved = payload.gamePath.replace('<channel>', payload.environment);
-          const writer = fs.createWriteStream(path.join(pathInstallResolved, GAME_PROJECT_PATH));
-
-          writer.on('finish', async () => {
-            event.sender.send('request-game-file/progress', { progress: 100, rate: 0 });
-            const result = await checkGameFile(pathInstallResolved, payload.environment, metadata.hash);
-            if (result) event.sender.send('request-game-file/done');
-            else event.sender.send('request-game-file/failure', 'Bad signature');
-          });
-
-          response.data.pipe(writer);
+  axios
+    .get(payload.installUrl, {
+      responseType: 'stream',
+      onDownloadProgress({ rate, loaded, total }) {
+        event.sender.send('request-game-file/progress', {
+          progress: total ? (loaded / total) * 100 : 0,
+          rate: rate || 0,
         });
+      },
+    })
+    .then((response) => {
+      const pathInstallResolved = payload.gamePath.replace('<channel>', payload.environment);
+      const writer = fs.createWriteStream(path.join(pathInstallResolved, GAME_PROJECT_PATH));
+
+      writer.on('finish', () => {
+        event.sender.send('request-game-file/progress', { progress: 100, rate: 0 });
+        event.sender.send('request-game-file/done');
+      });
+      writer.on('error', (error) => {
+        log.error('request-game-file/failure', error);
+        event.sender.send('request-game-file/failure', error.message);
+      });
+
+      response.data.on('error', (error: Error) => {
+        log.error('request-game-file/failure', error);
+        event.sender.send('request-game-file/failure', error.message);
+      });
+      response.data.pipe(writer);
+    })
+    .catch((error: unknown) => {
+      log.error('request-game-file/failure', error);
+      event.sender.send('request-game-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);
     });
-  } catch (error) {
-    log.error('request-game-file/failure', error);
-    event.sender.send('request-game-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);
-  }
 };

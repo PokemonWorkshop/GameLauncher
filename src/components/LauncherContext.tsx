@@ -17,12 +17,11 @@ import { STORAGE_KEY, useEnvironment } from './context/EnvironmentContext';
 
 const defaultConfiguration: GameConfiguration = {
   gamePath: '',
+  protectedPaths: [],
   channels: {
     stable: {
-      gameUrl: '',
-      gameVersion: '0.0.0',
       installUrl: '',
-      metadataUrl: '',
+      updateSource: 'github',
       binariesUrl: '',
     },
   },
@@ -57,6 +56,7 @@ type LauncherContext = {
   | 'uninstalling';
   configuration: GameConfiguration;
   environment: GameEnvironment;
+  installedVersion?: string;
   gameInstallProgress: GameInstallProgress;
   binariesUpdateProgress: BinariesUpdateProgress;
   gameUninstallProgress: GameUninstallProgress;
@@ -83,6 +83,7 @@ const LauncherContextHolder = createContext<LauncherContext>({
   state: 'loading',
   configuration: defaultConfiguration,
   environment: localStorage.getItem(STORAGE_KEY) || 'stable',
+  installedVersion: undefined,
   gameInstallProgress: { state: 'initializing', progress: 0, rate: 0 },
   binariesUpdateProgress: { state: 'checking', progress: 0, rate: 0 },
   gameUninstallProgress: { state: 'initializing', progress: 0 },
@@ -162,10 +163,6 @@ const useLauncherContextService = (): LauncherContext => {
   const onGameUpdateDoneChecking = (needToUpdateGame: boolean) => {
     setShouldUpdateBinaries(!needToUpdateGame);
   };
-  const onDownloadDone = (success: boolean) => {
-    setShouldDownload(false);
-    if (success) setShouldUpdateBinaries(true);
-  };
   const onBinariesUpdateDone = () => {
     setShouldUpdateBinaries(false);
     setFlipFlapConfig(!flipFlapConfig);
@@ -197,16 +194,29 @@ const useLauncherContextService = (): LauncherContext => {
   );
   const { hasGameInstallError, gameInstallProgress, resetGameInstall } = useGameInstall(shouldInstall, onGameInstallDone, configuration);
   const { isValidLicence, doneLicenceChecking, resetLicenceCheck } = useCheckLicence(isGameInstalled, configuration);
-  const { updateCheckProgress, filesToDownload, doneChecking, hasGameUpdateCheckError, resetGameUpdateCheck } = useGameUpdateCheck(
-    isValidLicence,
-    onGameUpdateDoneChecking,
-    configuration,
-  );
+  const {
+    updateCheckProgress,
+    filesToDownload,
+    release,
+    installedVersion,
+    doneChecking,
+    hasGameUpdateCheckError,
+    resetGameUpdateCheck,
+    markUpdateInstalled,
+  } = useGameUpdateCheck(isValidLicence, onGameUpdateDoneChecking, configuration);
+  const onDownloadDone = (success: boolean) => {
+    setShouldDownload(false);
+    if (!success) return;
+
+    if (release) markUpdateInstalled(release.version);
+    setShouldUpdateBinaries(true);
+  };
   const { overallProgress, downloadProgress, downloadDone, hasError, resetDownloadGameUpdate } = useDownloadGameUpdate(
     shouldDownload,
     filesToDownload,
     onDownloadDone,
     configuration,
+    release,
   );
   const { binariesUpdateProgress, hasBinariesUpdateError } = useBinariesUpdate(shouldUpdateBinaries, onBinariesUpdateDone, configuration);
   const { startProgress, hasStartError } = useStartGame(shouldStart, onStartDone, configuration);
@@ -264,6 +274,7 @@ const useLauncherContextService = (): LauncherContext => {
     ),
     configuration: configuration ?? defaultConfiguration,
     environment,
+    installedVersion,
     gameInstallProgress,
     binariesUpdateProgress,
     gameUninstallProgress,

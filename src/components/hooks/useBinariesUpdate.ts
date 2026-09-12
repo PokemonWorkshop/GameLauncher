@@ -26,7 +26,7 @@ export const useBinariesUpdate = (shouldUpdateBinaries: boolean, onBinariesUpdat
         setHasError({ isError: false });
         // fake progress
         setProgress({ progress: 10 + Math.floor(Math.random() * 15), rate: 0 });
-        binariesUpdate.checkNeedToUpdateBinaries(configuration.gamePath, environment).then((checkResult) => {
+        binariesUpdate.checkNeedToUpdateBinaries(configuration.gamePath, environment, configuration.channels[environment].binariesUrl).then((checkResult) => {
           if (checkResult.error.isError) {
             setHasError(checkResult.error);
             setState({ state: 'cleaning', isError: true });

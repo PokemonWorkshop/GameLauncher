@@ -21,6 +21,7 @@
   "restart_app": "Update and restart the application",
   "install": "Install the game",
   "download_game": "Download the game...",
+  "downloading_game_archive": "Downloading game update...",
   "install_game": "Game installation...",
   "error_install_game": "An error occurred during the installation of the game",
   "KB": "KB",

@@ -14,6 +14,7 @@ import { checkNeedToUpdateBinaries, cleanBinariesUpdate, extractBinaries, initBi
 import { openGameFolder } from '@ipcMain/openGameFolder';
 import { createDesktopShortcut } from '@ipcMain/createDesktopShortcut';
 import { gameUninstall } from '@ipcMain/gameUninstall';
+import { checkGameUpdate, requestGameUpdate } from '@ipcMain/gameUpdate';
 
 export const preloadIpcMain = () => {
   ipcMain.on('test-message', (_, message) => log.info(message));
@@ -43,12 +44,14 @@ export const preloadIpcMain = () => {
   });
   ipcMain.handle('init-game-install', async (_, gamePath, environment) => initGameInstall(gamePath, environment));
   ipcMain.handle('clean-game-install', async (_, gamePath, environment, removeGame) => cleanGameInstall(gamePath, environment, removeGame));
-  ipcMain.on('extract-game', (event, gamePath, environment) => extractGame(event, gamePath, environment));
-  ipcMain.on('request-game-file', (event, { gamePath, environment, installUrl, metadataUrl }) =>
-    requestGameFile(event, { gamePath, environment, installUrl, metadataUrl }),
+  ipcMain.on('extract-game', (event, payload) => extractGame(event, payload));
+  ipcMain.on('request-game-file', (event, { gamePath, environment, installUrl }) =>
+    requestGameFile(event, { gamePath, environment, installUrl }),
   );
-  ipcMain.handle('check-need-to-update-binaries', async (_, gamePath, environment) => {
-    const checkResult = await checkNeedToUpdateBinaries(gamePath, environment);
+  ipcMain.handle('check-game-update', (_, payload) => checkGameUpdate(payload));
+  ipcMain.on('request-game-update', (event, payload) => requestGameUpdate(event, payload));
+  ipcMain.handle('check-need-to-update-binaries', async (_, gamePath, environment, binariesUrl) => {
+    const checkResult = await checkNeedToUpdateBinaries(gamePath, environment, binariesUrl);
     return checkResult;
   });
   ipcMain.handle('init-binaries-update', async (_, gamePath, environment) => initBinariesUpdate(gamePath, environment));
