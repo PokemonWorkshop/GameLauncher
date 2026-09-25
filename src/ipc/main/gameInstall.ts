@@ -40,7 +40,7 @@ export const checkGameInstall = async (
   log.info('check-game-install', { gamePath, environment });
   const pathInstall = gamePath.replace('<channel>', environment);
   try {
-    // if the folder .temp exists, we can suppose that the install have encountered a problem or been interrupted, so the install folder is deleted
+    // if the folder .temp exists, we assume that the installation has encountered a problem and delete it
     const result = fs.existsSync(pathInstall) && !fs.existsSync(path.join(pathInstall, '.temp'));
     if (!result && fs.existsSync(path.join(pathInstall, '.temp'))) fs.rmSync(pathInstall, { recursive: true });
     return {
