@@ -22,12 +22,11 @@ export const Home = () => {
     state,
     configuration,
     environment,
+    installedVersion,
     gameInstallProgress,
     binariesUpdateProgress,
     gameUninstallProgress,
     progress,
-    overallProgress,
-    fileCount,
     hasGameInstallCheckError,
     hasGameInstallError,
     hasGameUpdateCheckError,
@@ -70,7 +69,7 @@ export const Home = () => {
         <Header>
           <p>{t('game_made_with_psdk')}</p>
           {state !== 'install_checking' && state !== 'install_waiting' && state !== 'installing' && (
-            <p>{state === 'loading' ? t('config_loading') : `${t('version')} ${configuration.channels[environment].gameVersion ?? '0.0.0'}`}</p>
+            <p>{state === 'loading' ? t('config_loading') : `${t('version')} ${installedVersion ?? ''}`}</p>
           )}
         </Header>
         <ActionContainer>
@@ -94,7 +93,7 @@ export const Home = () => {
             </FullWidthFooter>
           ) : state === 'updating' ? (
             <FullWidthFooter>
-              <ProgressBar label={`${t('downloading_files')} (${overallProgress}/${fileCount})`} value={progress} />
+              <ProgressBar label={t('downloading_game_archive')} value={progress} />
             </FullWidthFooter>
           ) : state === 'binaries_updating' && binariesUpdateProgress.state === 'checking' ? (
             <FullWidthFooter>

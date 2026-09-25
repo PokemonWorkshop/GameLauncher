@@ -17,6 +17,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 const BINARIES_TEMP_PATH = '.temp_binaries/binaries.7z';
+const LAUNCHER_BINARIES_VERSION_PATH = '.launcher/binaries_version.json';
 export const BINARIES_PATH = 'binaries';
 
 /** Clean useless old binaries because the new binaries is in the gamePath **/
@@ -66,6 +67,35 @@ const getBinariesHash = (binariesVersion: BinariesVersion) => {
   else return binariesVersion.macos;
 };
 
+const getLatestBinariesVersionUrl = (binariesUrl: GameChannelConfiguration['binariesUrl']) => {
+  const releaseDownloadPath = '/releases/download/';
+  if (!binariesUrl.includes(releaseDownloadPath)) {
+    throw new Error('The binaries URL must point to a GitHub releases download path');
+  }
+  return `${binariesUrl.replace(releaseDownloadPath, '/releases/latest/download/')}version.json`;
+};
+
+const getBinariesVersionPath = (gamePath: string) => {
+  const gameBinariesPath = path.join(gamePath, 'binaries_version.json');
+  return fs.existsSync(gameBinariesPath) ? gameBinariesPath : path.join(gamePath, LAUNCHER_BINARIES_VERSION_PATH);
+};
+
+const getGameBinariesVersion = async (
+  gamePath: string,
+  binariesUrl: GameChannelConfiguration['binariesUrl'],
+): Promise<BinariesVersion> => {
+  const gameBinariesPath = path.join(gamePath, 'binaries_version.json');
+  if (fs.existsSync(gameBinariesPath)) {
+    return JSON.parse(await fsPromise.readFile(gameBinariesPath, 'utf-8')) as BinariesVersion;
+  }
+
+  const { data: latestBinariesVersion } = await axios.get<BinariesVersion>(getLatestBinariesVersionUrl(binariesUrl));
+  const launcherBinariesPath = path.join(gamePath, LAUNCHER_BINARIES_VERSION_PATH);
+  await fsPromise.mkdir(path.dirname(launcherBinariesPath), { recursive: true });
+  await fsPromise.writeFile(launcherBinariesPath, JSON.stringify(latestBinariesVersion, null, 2));
+  return latestBinariesVersion;
+};
+
 const getPath7za = () => {
   // Optimisation: 7z binary files are not copied in development. The binaries are read directly from the dependencies.
   if (process.env.NODE_ENV === 'development') {
@@ -89,22 +119,17 @@ const checkBinariesFile = async (gamePath: GameConfiguration['gamePath'], hash: 
 export const checkNeedToUpdateBinaries = async (
   gamePath: GameConfiguration['gamePath'],
   environment: GameEnvironment,
+  binariesUrl: GameChannelConfiguration['binariesUrl'],
 ): Promise<CheckNeedToUpdateBinariesReturnType> => {
-  log.info('check-need-to-update-binaries', { gamePath, environment });
+  log.info('check-need-to-update-binaries', { gamePath, environment, binariesUrl });
   try {
     const gamePathFixed = gamePath.replace('<channel>', environment);
-    const gameBinariesPath = path.join(gamePathFixed, 'binaries_version.json');
     const noError = {
       isError: false,
     };
-    if (!fs.existsSync(gameBinariesPath)) {
-      return {
-        error: noError,
-        needToUpdate: false,
-      };
-    }
 
     const binariesVersionPath = path.join(gamePathFixed, BINARIES_PATH, 'version.json');
+    const gameBinaries = await getGameBinariesVersion(gamePathFixed, binariesUrl);
     if (!fs.existsSync(binariesVersionPath)) {
       return {
         error: noError,
@@ -112,9 +137,7 @@ export const checkNeedToUpdateBinaries = async (
       };
     }
 
-    const gameBinariesData = (await fsPromise.readFile(gameBinariesPath)).toString('utf-8');
     const binariesVersionData = (await fsPromise.readFile(binariesVersionPath)).toString('utf-8');
-    const gameBinaries = JSON.parse(gameBinariesData) as BinariesVersion;
     const binariesVersion = JSON.parse(binariesVersionData) as BinariesVersion;
     return {
       error: noError,
@@ -154,7 +177,7 @@ export const initBinariesUpdate = async (gamePath: GameConfiguration['gamePath']
   }
 };
 
-export const requestBinariesFile = (
+export const requestBinariesFile = async (
   event: IpcMainEvent,
   payload: {
     gamePath: GameConfiguration['gamePath'];
@@ -165,8 +188,7 @@ export const requestBinariesFile = (
   log.info('request-binaries-file', payload);
   try {
     const gamePathFixed = payload.gamePath.replace('<channel>', payload.environment);
-    const gameBinariesData = fs.readFileSync(path.join(gamePathFixed, 'binaries_version.json')).toString('utf-8');
-    const gameBinaries = JSON.parse(gameBinariesData) as BinariesVersion;
+    const gameBinaries = await getGameBinariesVersion(gamePathFixed, payload.binariesUrl);
 
     axios
       .get<BinariesVersion>(`${payload.binariesUrl}${gameBinaries.version}/version.json`)
@@ -241,7 +263,7 @@ export const cleanBinariesUpdate = async (
     const binariesPath = path.join(gamePathFixed, BINARIES_PATH);
     if (fs.existsSync(tempPath)) await fsPromise.rm(tempPath, { recursive: true });
     if (fs.existsSync(binariesPath) && removeBinaries) await fsPromise.rm(binariesPath, { recursive: true });
-    if (!removeBinaries) await fsPromise.copyFile(path.join(gamePathFixed, 'binaries_version.json'), path.join(binariesPath, 'version.json'));
+    if (!removeBinaries) await fsPromise.copyFile(getBinariesVersionPath(gamePathFixed), path.join(binariesPath, 'version.json'));
     // remove site_ruby folder from binaries because the game doesn't start if it exists
     const siteRubyPath = path.join(binariesPath, 'lib/ruby/site_ruby');
     if (fs.existsSync(siteRubyPath)) await fsPromise.rm(siteRubyPath, { recursive: true });

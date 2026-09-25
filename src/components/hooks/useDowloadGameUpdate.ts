@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { GameConfiguration, LauncherError, ValidChannels } from '@src/types';
+import { GameConfiguration, GameRelease, GameUpdateProgress, LauncherError } from '@src/types';
 
 import { voidCleanup } from './voidCleanup';
 import { useEnvironment } from '@components/context/EnvironmentContext';
@@ -10,11 +10,11 @@ export const useDownloadGameUpdate = (
   filesToDownload: string[],
   onDownloadDone: (success: boolean) => void,
   configuration?: GameConfiguration,
+  release?: GameRelease,
 ) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [overallProgress, setOverallProgress] = useState(0);
   const [hasError, setHasError] = useState<LauncherError>({ isError: false });
-  const requestFile = window.launcherApi.requestFile;
   const { environment } = useEnvironment();
 
   const resetState = () => {
@@ -24,59 +24,26 @@ export const useDownloadGameUpdate = (
   };
 
   useEffect(() => {
-    if (!shouldDownload || !configuration) return voidCleanup;
-    if (overallProgress === filesToDownload.length) return voidCleanup;
-
-    const fileToDownload = filesToDownload[overallProgress];
-
-    const asyncHandler = async () => {
-      const channel = environment || 'stable';
-      window.console.log(environment);
-      const resolvedGamePath = configuration.gamePath.replace('<channel>', channel);
-
-      const realFilename = `${resolvedGamePath}${fileToDownload.startsWith('/') ? fileToDownload : `/${fileToDownload}`}`;
-      const estimatedFileSize = await window.launcherApi.estimateFileSize(realFilename);
-      window.launcherApi.log.info(realFilename, estimatedFileSize);
-
-      requestFile.onRequestDone(async () => {
-        const state = await requestFile.getRequestStateReport();
-        if (state.success) {
-          const data = await requestFile.getRequestData('binary');
-          try {
-            await window.launcherApi.saveFile(realFilename, data);
-
-            setOverallProgress(overallProgress + 1);
-            setDownloadProgress((overallProgress + 1) / filesToDownload.length * 100);
-
-            if (overallProgress === filesToDownload.length - 1) onDownloadDone(true);
-          } catch (e) {
-            if (e instanceof Error) {
-              window.launcherApi.log.error(e);
-              setHasError({ isError: true, message: `(${e.message})` });
-            } else {
-              setHasError({ isError: true });
-            }
-            onDownloadDone(false);
-          }
-        } else {
-          const message = state.status.message ? `(Code: ${state.status.code}: ${state.status.message})` : `(Code: ${state.status.code})`;
-          setHasError({ isError: true, message });
-          onDownloadDone(false);
-        }
-      });
-
-      requestFile.requestFile(
-        new URL(
-          `game/${fileToDownload}?v=${configuration.gameName ?? 0}`,
-          configuration.channels[environment as ValidChannels<typeof configuration>]?.gameUrl,
-        ).href,
-      );
-    };
-
-    asyncHandler();
-
-    return requestFile.removeEventListeners;
-  }, [shouldDownload, filesToDownload, overallProgress]);
+    if (!shouldDownload || !configuration || !release) return voidCleanup;
+    const gameUpdate = window.launcherApi.gameUpdate;
+    gameUpdate.onProgress((progress: GameUpdateProgress) => {
+      setDownloadProgress(progress.progress);
+      if (progress.state === 'done') setOverallProgress(1);
+    });
+    gameUpdate.onDone(() => onDownloadDone(true));
+    gameUpdate.onFailure((message) => {
+      setHasError({ isError: true, message: `(${message})` });
+      onDownloadDone(false);
+    });
+    gameUpdate.requestGameUpdate({
+      gamePath: configuration.gamePath,
+      environment,
+      channel: configuration.channels[environment],
+      release,
+      protectedPaths: configuration.protectedPaths,
+    });
+    return gameUpdate.removeEventListeners;
+  }, [shouldDownload, configuration, release]);
 
   return {
     downloadDone: overallProgress === filesToDownload.length || hasError.isError,

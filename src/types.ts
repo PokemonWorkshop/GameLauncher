@@ -6,16 +6,18 @@ export type ValidChannels<C extends GameConfiguration> = keyof C['channels'];
 export type GameEnvironment = ValidChannels<GameConfiguration>;
 
 export type GameChannelConfiguration = {
-  gameUrl: string;
-  gameVersion: string;
   installUrl: string;
-  metadataUrl: string;
+  installVersion?: string;
+  updateSource: 'github' | 'server';
+  githubUrl?: string;
+  serverUrl?: string;
   binariesUrl: string;
   tokenRequired?: boolean;
 };
 
 export type GameConfiguration = {
   gamePath: string;
+  protectedPaths: string[];
   channels: Record<string, GameChannelConfiguration> & {
     stable: GameChannelConfiguration;
   };
@@ -52,6 +54,24 @@ export type LauncherError = {
   message?: string;
 };
 
+export type GameRelease = {
+  version: string;
+  downloadUrl: string;
+};
+
+export type CheckGameUpdateReturnType = {
+  needsUpdate: boolean;
+  installedVersion?: string;
+  release?: GameRelease;
+  error: LauncherError;
+};
+
+export type GameUpdateProgress = {
+  state: 'downloading' | 'extracting' | 'applying' | 'done';
+  progress: number;
+  rate: number;
+};
+
 export type Licence = {
   key: string;
   user: string;
@@ -66,12 +86,6 @@ export type GameInstallProgress = {
   state: 'initializing' | 'downloading' | 'extracting' | 'cleaning' | 'done';
   progress: number;
   rate: number;
-};
-
-export type GameInstallMetadata = {
-  version: string;
-  length: number;
-  hash: string;
 };
 
 export type BinariesVersion = {
@@ -123,7 +137,11 @@ interface IGameInstall {
   checkGameInstall: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => Promise<CheckGameInstallReturnType>;
   initGameInstall: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => Promise<LauncherError>;
   cleanGameInstall: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment, removeGame: boolean) => Promise<LauncherError>;
-  extractGame: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => void;
+  extractGame: (payload: {
+    gamePath: GameConfiguration['gamePath'];
+    environment: GameEnvironment;
+    channel: GameChannelConfiguration;
+  }) => void;
   onExtractDone: (callback: () => void) => void;
   onExtractProgress: (callback: (progress: number) => void) => void;
   onExtractFailure: (callback: (errorMessage: string) => void) => void;
@@ -131,7 +149,6 @@ interface IGameInstall {
     gamePath: GameConfiguration['gamePath'];
     environment: GameEnvironment;
     installUrl: GameChannelConfiguration['installUrl'];
-    metadataUrl: GameChannelConfiguration['metadataUrl'];
   }) => void;
   onRequestGameFileDone: (callback: () => void) => void;
   onRequestGameFileProgress: (callback: (progress: number, rate: number) => void) => void;
@@ -139,8 +156,31 @@ interface IGameInstall {
   removeEventListeners: () => void;
 }
 
+interface IGameUpdate {
+  checkGameUpdate: (payload: {
+    gamePath: GameConfiguration['gamePath'];
+    environment: GameEnvironment;
+    channel: GameChannelConfiguration;
+  }) => Promise<CheckGameUpdateReturnType>;
+  requestGameUpdate: (payload: {
+    gamePath: GameConfiguration['gamePath'];
+    environment: GameEnvironment;
+    channel: GameChannelConfiguration;
+    release: GameRelease;
+    protectedPaths: string[];
+  }) => void;
+  onProgress: (callback: (progress: GameUpdateProgress) => void) => void;
+  onDone: (callback: () => void) => void;
+  onFailure: (callback: (message: string) => void) => void;
+  removeEventListeners: () => void;
+}
+
 interface IBinariesUpdate {
-  checkNeedToUpdateBinaries: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => Promise<CheckNeedToUpdateBinariesReturnType>;
+  checkNeedToUpdateBinaries: (
+    gamePath: GameConfiguration['gamePath'],
+    environment: GameEnvironment,
+    binariesUrl: GameChannelConfiguration['binariesUrl'],
+  ) => Promise<CheckNeedToUpdateBinariesReturnType>;
   initBinariesUpdate: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment) => Promise<LauncherError>;
   cleanBinariesUpdate: (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment, removeBinaries: boolean) => Promise<LauncherError>;
   requestBinariesFile: (payload: { gamePath: GameConfiguration['gamePath']; binariesUrl: string; environment: GameEnvironment }) => void;
@@ -185,6 +225,7 @@ export interface ILauncherAPI {
   requestFile: IRequestFile;
   startGame: IStartGame;
   gameInstall: IGameInstall;
+  gameUpdate: IGameUpdate;
   binariesUpdate: IBinariesUpdate;
   gameUninstall: IGameUninstall;
   log: LogRendererType;
