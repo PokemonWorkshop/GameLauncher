@@ -42,7 +42,6 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
       case 'downloading':
         gameInstall.requestGameFile({
           installUrl: configuration.channels[environment].installUrl,
-          metadataUrl: configuration.channels[environment].metadataUrl,
           gamePath: configuration.gamePath,
           environment,
         });
@@ -54,7 +53,11 @@ export const useGameInstall = (shouldInstall: boolean, onGameInstallDone: () => 
         });
         break;
       case 'extracting':
-        gameInstall.extractGame(configuration.gamePath, environment);
+        gameInstall.extractGame({
+          gamePath: configuration.gamePath,
+          environment,
+          channel: configuration.channels[environment],
+        });
         gameInstall.onExtractDone(() => setState({ state: 'cleaning', isError: false }));
         gameInstall.onExtractProgress((progress) => setProgress({ progress, rate: 0 }));
         gameInstall.onExtractFailure((errorMessage) => {

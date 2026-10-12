@@ -8,7 +8,11 @@ export const initGameInstall = (gamePath: GameConfiguration['gamePath'], env: Ga
   ipcRenderer.invoke('init-game-install', gamePath, env);
 export const cleanGameInstall = (gamePath: GameConfiguration['gamePath'], env: GameEnvironment, removeGame: boolean): Promise<LauncherError> =>
   ipcRenderer.invoke('clean-game-install', gamePath, env, removeGame);
-export const extractGame = (gamePath: GameConfiguration['gamePath'], env: GameEnvironment) => ipcRenderer.send('extract-game', gamePath, env);
+export const extractGame = (payload: {
+  gamePath: GameConfiguration['gamePath'];
+  environment: GameEnvironment;
+  channel: GameChannelConfiguration;
+}) => ipcRenderer.send('extract-game', payload);
 export const onExtractDone = (callback: () => void) => ipcRenderer.once('extract-game/done', () => callback());
 export const onExtractProgress = (callback: (progress: number) => void) =>
   ipcRenderer.on('extract-game/progress', (_, progress) => callback(progress));
@@ -17,7 +21,6 @@ export const onExtractFailure = (callback: (errorMessage: string) => void) =>
 export const requestGameFile = (payload: {
   environment: GameEnvironment;
   installUrl: GameChannelConfiguration['installUrl'];
-  metadataUrl: GameChannelConfiguration['metadataUrl'];
   gamePath: GameConfiguration['gamePath'];
 }) => ipcRenderer.send('request-game-file', payload);
 export const onRequestGameFileDone = (callback: () => void) => ipcRenderer.once('request-game-file/done', () => callback());
