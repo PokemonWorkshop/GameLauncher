@@ -13,8 +13,8 @@ import fsPromise from 'fs/promises';
 import path from 'path';
 import sevenBin from '7zip-bin';
 import { extractFull } from 'node-7z';
-import axios from 'axios';
 import crypto from 'crypto';
+import { downloadFile, fetchResponse } from '@utils/fetch';
 
 const BINARIES_TEMP_PATH = '.temp_binaries/binaries.7z';
 const LAUNCHER_BINARIES_VERSION_PATH = '.launcher/binaries_version.json';
@@ -89,7 +89,8 @@ const getGameBinariesVersion = async (
     return JSON.parse(await fsPromise.readFile(gameBinariesPath, 'utf-8')) as BinariesVersion;
   }
 
-  const { data: latestBinariesVersion } = await axios.get<BinariesVersion>(getLatestBinariesVersionUrl(binariesUrl));
+  const response = await fetchResponse(getLatestBinariesVersionUrl(binariesUrl));
+  const latestBinariesVersion: BinariesVersion = await response.json();
   const launcherBinariesPath = path.join(gamePath, LAUNCHER_BINARIES_VERSION_PATH);
   await fsPromise.mkdir(path.dirname(launcherBinariesPath), { recursive: true });
   await fsPromise.writeFile(launcherBinariesPath, JSON.stringify(latestBinariesVersion, null, 2));
@@ -190,38 +191,18 @@ export const requestBinariesFile = async (
     const gamePathFixed = payload.gamePath.replace('<channel>', payload.environment);
     const gameBinaries = await getGameBinariesVersion(gamePathFixed, payload.binariesUrl);
 
-    axios
-      .get<BinariesVersion>(`${payload.binariesUrl}${gameBinaries.version}/version.json`)
-      .then((response) => {
-        const latest = response.data;
-        if (!compareBinariesVersion(gameBinaries, latest)) throw Error('The binaries found are not the expected binaries');
+    const response = await fetchResponse(`${payload.binariesUrl}${gameBinaries.version}/version.json`);
+    const latest: BinariesVersion = await response.json();
+    if (!compareBinariesVersion(gameBinaries, latest)) throw Error('The binaries found are not the expected binaries');
 
-        axios
-          .get(`${payload.binariesUrl}${gameBinaries.version}/${getBinariesFilename()}`, {
-            responseType: 'stream',
-            onDownloadProgress({ rate, progress }) {
-              event.sender.send('request-binaries-file/progress', { progress: (progress ?? 0) * 100, rate: rate || 0 });
-            },
-          })
-          .then((response) => {
-            const writer = fs.createWriteStream(path.join(gamePathFixed, BINARIES_TEMP_PATH));
-            writer.on('finish', async () => {
-              event.sender.send('request-binaries-file/progress', { progress: 100, rate: 0 });
-              const result = await checkBinariesFile(gamePathFixed, getBinariesHash(latest));
-              if (result) event.sender.send('request-binaries-file/done');
-              else event.sender.send('request-binaries-file/failure', 'Bad signature');
-            });
-            response.data.pipe(writer);
-          })
-          .catch((error) => {
-            log.error('request-binaries-file/failure', error);
-            event.sender.send('request-binaries-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);
-          });
-      })
-      .catch((error) => {
-        log.error('request-binaries-file/failure', error);
-        event.sender.send('request-binaries-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);
-      });
+    await downloadFile(
+      `${payload.binariesUrl}${gameBinaries.version}/${getBinariesFilename()}`,
+      path.join(gamePathFixed, BINARIES_TEMP_PATH),
+      (progress) => event.sender.send('request-binaries-file/progress', progress),
+    );
+    const result = await checkBinariesFile(gamePathFixed, getBinariesHash(latest));
+    if (result) event.sender.send('request-binaries-file/done');
+    else event.sender.send('request-binaries-file/failure', 'Bad signature');
   } catch (error) {
     log.error('request-binaries-file/failure', error);
     event.sender.send('request-binaries-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);

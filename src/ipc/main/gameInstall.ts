@@ -1,10 +1,10 @@
-import axios from 'axios';
 import { IpcMainEvent } from 'electron';
 import log from 'electron-log';
 import extract from 'extract-zip';
 import fs from 'fs';
 import path from 'path';
 import { ZipFile } from 'yauzl';
+import { downloadFile } from '@utils/fetch';
 
 import {
   CheckGameInstallReturnType,
@@ -126,7 +126,7 @@ export const extractGame = async (
   }
 };
 
-export const requestGameFile = (
+export const requestGameFile = async (
   event: IpcMainEvent,
   payload: {
     gamePath: GameConfiguration['gamePath'];
@@ -136,37 +136,16 @@ export const requestGameFile = (
 ) => {
   log.info('request-game-file');
 
-  axios
-    .get(payload.installUrl, {
-      responseType: 'stream',
-      onDownloadProgress({ rate, loaded, total }) {
-        event.sender.send('request-game-file/progress', {
-          progress: total ? (loaded / total) * 100 : 0,
-          rate: rate || 0,
-        });
-      },
-    })
-    .then((response) => {
-      const pathInstallResolved = payload.gamePath.replace('<channel>', payload.environment);
-      const writer = fs.createWriteStream(path.join(pathInstallResolved, GAME_PROJECT_PATH));
-
-      writer.on('finish', () => {
-        event.sender.send('request-game-file/progress', { progress: 100, rate: 0 });
-        event.sender.send('request-game-file/done');
-      });
-      writer.on('error', (error) => {
-        log.error('request-game-file/failure', error);
-        event.sender.send('request-game-file/failure', error.message);
-      });
-
-      response.data.on('error', (error: Error) => {
-        log.error('request-game-file/failure', error);
-        event.sender.send('request-game-file/failure', error.message);
-      });
-      response.data.pipe(writer);
-    })
-    .catch((error: unknown) => {
-      log.error('request-game-file/failure', error);
-      event.sender.send('request-game-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);
-    });
+  try {
+    const pathInstallResolved = payload.gamePath.replace('<channel>', payload.environment);
+    await downloadFile(
+      payload.installUrl,
+      path.join(pathInstallResolved, GAME_PROJECT_PATH),
+      (progress) => event.sender.send('request-game-file/progress', progress),
+    );
+    event.sender.send('request-game-file/done');
+  } catch (error) {
+    log.error('request-game-file/failure', error);
+    event.sender.send('request-game-file/failure', `${error instanceof Error ? error.message : 'An error occurred while downloading'}`);
+  }
 };

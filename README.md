@@ -19,7 +19,7 @@ Copy the content below in a file named `config.json` that is located in the `scr
     ],
   "licenseUrl": "<LICENSE_CHECK_URL>",
   "channels": {
-    "stable": {
+    "github": {
       "installUrl": "<URL_OF_THE_FULL_GAME_ZIP>",
       "installVersion": "<VERSION_OF_THE_FIRST_INSTALL>",
       "updateSource": "github",
@@ -30,7 +30,7 @@ Copy the content below in a file named `config.json` that is located in the `scr
       "installUrl": "<URL_OF_THE_FULL_GAME_ZIP>",
       "installVersion": "<VERSION_OF_THE_FIRST_INSTALL>",
       "updateSource": "server",
-      "serverUrl": "<URL_OF_THE_DIRECTORY_LISTING_ZIP_FILES>",
+      "serverUrl": "<URL_OF_THE_DIRECTORY_CONTAINING_LATEST_JSON_AND_ZIP_FILES>",
       "binariesUrl": "https://github.com/PokemonWorkshop/PokemonSDKBinaries/releases/download/"
     }
   },
@@ -52,14 +52,16 @@ Copy the content below in a file named `config.json` that is located in the `scr
 - `gamePath` (required): where the game is installed. `%appdata%` is replaced by the user's app data folder and `<channel>` (keep it as is) by the selected channel name, so each channel gets its own install folder.
 - `protectedPaths` (required): paths, relative to the game folder, that updates never overwrite or delete (e.g. `Saves/**` to keep player saves). Use an empty array `[]` if there is none.
 - `licenseUrl` (optional): URL used to check the player's licence (`?key=<key>&user=<user>` is appended). When omitted, no licence check is done.
-- `channels` (required): the release channels the user can pick from. A `stable` channel is mandatory, you can add any other channel (`beta`, ...). Each channel has:
+- `channels` (required): the release channels the user can pick from. At least one channel is required; channel names are unrestricted (`stable`, `beta`, ...). The launcher restores the saved channel if it still exists; otherwise, it selects and saves the first channel listed in this object. Each channel has:
   - `installUrl` (required): URL of the ZIP used for the first installation.
   - `installVersion` (required): semantic version (`1.0.0`) of that ZIP. It is stored in the install manifest to know which updates are newer.
   - `updateSource` (required): `"server"` or `"github"`.
-    - `"server"` requires `serverUrl`: a web directory listing containing ZIP files named after their semantic version (`1.0.1.zip`, `v1.2.0-beta.1.zip`...). The highest version is the latest.
+    - `"server"` requires `serverUrl`: the URL of a directory containing `latest.json` and version-named ZIP files. The launcher first fetches `latest.json`, which must contain an object such as `{"version": "abc-1.2.3"}`, then downloads the corresponding archive (`abc-1.2.3.zip`) from the same directory when the update is applied.
     - `"github"` requires `githubUrl`: the repository URL (`https://github.com/<owner>/<repository>`). Its latest GitHub release tag must be a semantic version and the release must contain exactly one `.zip` asset.
   - `binariesUrl` (required): download URL of the PSDK game binaries. The default value works for standard PSDK games.
 - `socialLinks` (required): links displayed in the launcher. All eight keys must be present, use `""` for the ones you don't have.
+
+Versions may have a prefix containing any number of letters, hyphens, or underscores before the three-part version, for example `v1.2.3`, `Game_1.2.3`, or `abc-1.2.3-beta.1`. Prefixes are ignored when comparing versions.
 
 ## How it works
 

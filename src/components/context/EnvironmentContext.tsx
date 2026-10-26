@@ -1,7 +1,15 @@
+import config from '@src/config.json';
 import { GameEnvironment } from '@src/types';
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 export const STORAGE_KEY = 'app_environment';
+
+const channels = Object.keys(config.channels);
+export const DEFAULT_ENVIRONMENT = channels[0];
+
+if (DEFAULT_ENVIRONMENT === undefined) {
+  throw new Error('At least one release channel must be configured.');
+}
 
 type EnvironmentContextType = {
   environment: GameEnvironment;
@@ -11,12 +19,14 @@ type EnvironmentContextType = {
 const EnvironmentContext = createContext<EnvironmentContextType | null>(null);
 
 export function EnvironmentProvider({ children }: { children: ReactNode }) {
-  const [environment, setEnvironmentState] = useState<GameEnvironment>('stable');
+  const [environment, setEnvironmentState] = useState<GameEnvironment>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved !== null && channels.includes(saved) ? saved : DEFAULT_ENVIRONMENT;
+  });
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as GameEnvironment | null;
-    if (saved) setEnvironmentState(saved);
-  }, []);
+    localStorage.setItem(STORAGE_KEY, environment);
+  }, [environment]);
 
   const verifyBetaAccess = async () => {
     const token = localStorage.getItem('beta_token');

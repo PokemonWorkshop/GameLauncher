@@ -18,9 +18,7 @@ export type GameChannelConfiguration = {
 export type GameConfiguration = {
   gamePath: string;
   protectedPaths: string[];
-  channels: Record<string, GameChannelConfiguration> & {
-    stable: GameChannelConfiguration;
-  };
+  channels: Record<string, GameChannelConfiguration>;
   licenseUrl?: string;
   socialLinks: SocialLinks;
 };

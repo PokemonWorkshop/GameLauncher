@@ -13,18 +13,12 @@ import { useStartGame } from './hooks/useStartGame';
 import { voidCleanup } from './hooks/voidCleanup';
 import { useBinariesUpdate } from './hooks/useBinariesUpdate';
 import { useGameUninstall } from './hooks/useGameUninstall';
-import { STORAGE_KEY, useEnvironment } from './context/EnvironmentContext';
+import { DEFAULT_ENVIRONMENT, useEnvironment } from './context/EnvironmentContext';
 
 const defaultConfiguration: GameConfiguration = {
   gamePath: '',
   protectedPaths: [],
-  channels: {
-    stable: {
-      installUrl: '',
-      updateSource: 'github',
-      binariesUrl: '',
-    },
-  },
+  channels: {},
   socialLinks: {
     website: '',
     discord: '',
@@ -82,7 +76,7 @@ type LauncherContext = {
 const LauncherContextHolder = createContext<LauncherContext>({
   state: 'loading',
   configuration: defaultConfiguration,
-  environment: localStorage.getItem(STORAGE_KEY) || 'stable',
+  environment: DEFAULT_ENVIRONMENT,
   installedVersion: undefined,
   gameInstallProgress: { state: 'initializing', progress: 0, rate: 0 },
   binariesUpdateProgress: { state: 'checking', progress: 0, rate: 0 },

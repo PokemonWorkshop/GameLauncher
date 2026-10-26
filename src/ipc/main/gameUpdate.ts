@@ -1,11 +1,10 @@
-import axios from 'axios';
 import crypto from 'crypto';
 import { IpcMainEvent } from 'electron';
-import fsSync from 'fs';
 import fs from 'fs/promises';
 import log from 'electron-log';
 import extract from 'extract-zip';
 import path from 'path';
+import { downloadFile, fetchResponse } from '@utils/fetch';
 
 import { CheckGameUpdateReturnType, GameChannelConfiguration, GameConfiguration, GameEnvironment, GameRelease } from '@src/types';
 
@@ -21,7 +20,7 @@ type SemanticVersion = {
 };
 
 const parseVersion = (value: string): SemanticVersion | undefined => {
-  const match = value.trim().match(/^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z.-]+)?$/);
+  const match = value.trim().match(/^[A-Za-z_-]*(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z.-]+)?$/);
   if (!match) return undefined;
   return {
     major: Number(match[1]),
@@ -57,28 +56,28 @@ const compareVersion = (left: SemanticVersion, right: SemanticVersion): number =
 const getGithubRelease = async (repositoryUrl: string): Promise<GameRelease> => {
   const repository = new URL(repositoryUrl).pathname.split('/').filter(Boolean);
   if (repository.length !== 2) throw new Error('githubUrl must identify an owner and repository');
-  const response = await axios.get(`https://api.github.com/repos/${repository[0]}/${repository[1]}/releases/latest`, {
+  const response = await fetchResponse(`https://api.github.com/repos/${repository[0]}/${repository[1]}/releases/latest`, {
     headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'GameLauncher' },
   });
-  const version = String(response.data.tag_name || '');
+  const release: { tag_name: string; assets: { name: string; browser_download_url: string }[] } = await response.json();
+  const version = String(release.tag_name || '');
   if (!parseVersion(version)) throw new Error('The latest GitHub release tag is not a valid semantic version');
-  const zipAssets = response.data.assets.filter((asset: { name: string }) => asset.name.toLowerCase().endsWith('.zip'));
+  const zipAssets = release.assets.filter((asset) => asset.name.toLowerCase().endsWith('.zip'));
   if (zipAssets.length !== 1) throw new Error('The latest GitHub release must contain exactly one ZIP asset');
   return { version, downloadUrl: zipAssets[0].browser_download_url };
 };
 
 const getServerRelease = async (serverUrl: string): Promise<GameRelease> => {
-  const response = await axios.get(serverUrl, { responseType: 'text' });
-  const candidates = [...response.data.matchAll(/href\s*=\s*["']([^"']+\.zip)["']/gi)]
-    .map((match) => new URL(match[1], serverUrl))
-    .map((downloadUrl) => {
-      const filename = path.posix.basename(downloadUrl.pathname);
-      const version = filename.match(/^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)\.zip$/i)?.[1];
-      return version && parseVersion(version) ? { version, downloadUrl: downloadUrl.href } : undefined;
-    })
-    .filter((release): release is GameRelease => release !== undefined);
-  if (candidates.length === 0) throw new Error('The server directory contains no ZIP files with semantic-version names');
-  return candidates.reduce((latest, release) => (compareVersion(parseVersion(release.version)!, parseVersion(latest.version)!) > 0 ? release : latest));
+  const directoryUrl = new URL(serverUrl);
+  if (!directoryUrl.pathname.endsWith('/')) directoryUrl.pathname += '/';
+  const response = await fetchResponse(new URL('latest.json', directoryUrl).href);
+  const metadata: unknown = await response.json();
+  if (typeof metadata !== 'object' || metadata === null || !('version' in metadata) || typeof metadata.version !== 'string') {
+    throw new Error('The server latest.json must contain a version string');
+  }
+  const version = metadata.version.trim();
+  if (!parseVersion(version)) throw new Error('The server latest.json version is not a valid semantic version');
+  return { version, downloadUrl: new URL(`${encodeURIComponent(version)}.zip`, directoryUrl).href };
 };
 
 export const getLatestRelease = (channel: GameChannelConfiguration): Promise<GameRelease> => {
@@ -175,19 +174,11 @@ export const requestGameUpdate = async (
   try {
     await fs.rm(updatePath, { recursive: true, force: true });
     await fs.mkdir(updatePath, { recursive: true });
-    const response = await axios.get(payload.release.downloadUrl, {
-      responseType: 'stream',
-      onDownloadProgress: ({ loaded, total, rate }) => event.sender.send('game-update/progress', {
-        state: 'downloading', progress: total ? (loaded / total) * 100 : 0, rate: rate || 0,
+    await downloadFile(payload.release.downloadUrl, archivePath, ({ progress, rate }) =>
+      event.sender.send('game-update/progress', {
+        state: 'downloading', progress, rate,
       }),
-    });
-    await new Promise<void>((resolve, reject) => {
-      const writer = fsSync.createWriteStream(archivePath);
-      response.data.on('error', reject);
-      writer.on('error', reject);
-      writer.on('finish', resolve);
-      response.data.pipe(writer);
-    });
+    );
     event.sender.send('game-update/progress', { state: 'extracting', progress: 0, rate: 0 });
     await extract(archivePath, { dir: stagingPath });
     const newFiles = (await getFiles(stagingPath)).filter((file) => !isProtected(file, payload.protectedPaths));
