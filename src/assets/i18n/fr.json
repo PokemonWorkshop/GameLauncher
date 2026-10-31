@@ -21,6 +21,7 @@
   "restart_app": "Mettre à jour et redémarrer l’application",
   "install": "Installer le jeu",
   "download_game": "Téléchargement du jeu...",
+  "downloading_game_archive": "Téléchargement de la mise à jour...",
   "install_game": "Installation du jeu...",
   "error_install_game": "Une erreur est survenue pendant l’installation du jeu",
   "KB": "Ko",

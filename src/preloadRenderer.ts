@@ -6,6 +6,7 @@ import * as requestFile from '@ipcRenderer/requestFile';
 import * as startGame from '@ipcRenderer/startGame';
 import * as binariesUpdate from '@ipcRenderer/binariesUpdate';
 import * as gameUninstall from '@ipcRenderer/gameUninstall';
+import * as gameUpdate from '@ipcRenderer/gameUpdate';
 
 import { ILauncherAPI } from './types';
 
@@ -32,6 +33,7 @@ const launcherApi: ILauncherAPI = {
   requestFile,
   startGame,
   gameInstall,
+  gameUpdate,
   binariesUpdate,
   gameUninstall,
   log: logRenderer,
@@ -45,4 +47,4 @@ declare global {
   }
 }
 
-export {};
+export { };

@@ -5,7 +5,8 @@ import { CheckNeedToUpdateBinariesReturnType, GameChannelConfiguration, GameConf
 export const checkNeedToUpdateBinaries = (
   gamePath: GameConfiguration['gamePath'],
   environment: GameEnvironment,
-): Promise<CheckNeedToUpdateBinariesReturnType> => ipcRenderer.invoke('check-need-to-update-binaries', gamePath, environment);
+  binariesUrl: GameChannelConfiguration['binariesUrl'],
+): Promise<CheckNeedToUpdateBinariesReturnType> => ipcRenderer.invoke('check-need-to-update-binaries', gamePath, environment, binariesUrl);
 export const initBinariesUpdate = (gamePath: GameConfiguration['gamePath'], environment: GameEnvironment): Promise<LauncherError> =>
   ipcRenderer.invoke('init-binaries-update', gamePath, environment);
 export const cleanBinariesUpdate = (
